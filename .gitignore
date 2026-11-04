@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Xcode user state and build products
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+Build/
+*.xcresult
+
+# Swift Package Manager caches (Package.resolved is committed)
+.swiftpm/
+.build/
+
+# Internal documents kept out of the public repository
+ScreenVoice_Technical_Specification_MVP.pdf

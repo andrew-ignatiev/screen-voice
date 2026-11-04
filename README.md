@@ -113,7 +113,7 @@ Open with **ScreenVoice → Settings…** (⌘,) or from the menu-bar icon. Sett
 | Voice preset *(Qwen)* | Narrator, male / Narrator, female / your saved presets | Narrator, male | Shows **Custom (not saved)** after you change the voice; see [Voices and presets](#voices-and-presets) |
 | Gender *(Qwen)* | Male / Female | Male | An unedited default style switches with the gender; an edited style is kept |
 | Style *(Qwen)* | Free text, in English | Audiobook narrator description | Timbre, age, accent, manner. **Reset Style** restores the default |
-| Voice variant *(Qwen)* | Variant N + **Try Another** | 6 (male), 2 (female) | A different voice that fits the same description |
+| Voice variant *(Qwen)* | Number field with ± arrows (1–99999) | 6 (male), 2 (female) | A different voice that fits the same description |
 | Listen / Save as Preset… / Delete Preset *(Qwen)* | Buttons | – | Saved presets keep gender, style and variant; a preset with the same name is replaced |
 | Voice / Fallback voice | Best installed Russian voice, or a specific ru-RU voice | Best installed | Used by the system engine, and as the fallback for Qwen |
 | Speed | Slider | Normal | System: `AVSpeechUtterance` rate. Qwen: 0.5×–2× time-stretch, pitch preserved |
@@ -297,7 +297,7 @@ flowchart LR
 ```
 
 - **Why the seed matters:** without it the model invents a new voice for every phrase, even with the same description (pitch ranged 75–212 Hz in a test). With a fixed seed the same text always gives identical audio, and the voice stays consistent across phrases.
-- **Variants differ in steadiness.** In a scan of seeds 1–8, some kept an even pitch across different sentences and others drifted. The built-in presets use the steadiest: male variant 6 (~100 Hz, a baritone) and female variant 2 (~230 Hz). If a variant you like drifts on some lines, try the next one.
+- **Variants differ in steadiness.** In a scan of seeds 1–8, some kept an even pitch across different sentences and others drifted. The built-in presets use the steadiest: male variant 6 (~100 Hz, a baritone) and female variant 2 (~230 Hz). If a variant you like drifts on some lines, try a neighbouring one.
 - **Style text** works best in English. The default is an audiobook-narrator description; the male and female defaults differ only in the timbre line.
 - **Presets** are stored with the other settings in `UserDefaults`. Built-in presets can't be changed or deleted; picking one and editing anything gives a custom voice you can save under a new name.
 

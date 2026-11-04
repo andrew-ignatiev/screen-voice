@@ -238,11 +238,6 @@ final class AppCoordinator {
         }
     }
 
-    /// Keeps the description and picks another voice that matches it.
-    func nextNeuralVoiceVariant() {
-        settingsStore.settings.neuralVoice.seed &+= 1
-    }
-
     private func prepareNeuralVoice() async {
         guard settings.speechEngine == .qwen, speech.qwen.modelStore.isInstalled else { return }
         await speech.qwen.prepare()

@@ -1296,16 +1296,6 @@
         }
       }
     },
-    "Try Another": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Другой вариант"
-          }
-        }
-      }
-    },
     "Until the voice is loaded, or if it fails, phrases are spoken with the system voice below.": {
       "localizations": {
         "ru": {
@@ -1322,16 +1312,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Без названия"
-          }
-        }
-      }
-    },
-    "Variant %llu": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Вариант %llu"
           }
         }
       }

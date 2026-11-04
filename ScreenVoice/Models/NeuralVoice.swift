@@ -50,6 +50,9 @@ struct NeuralVoice: Codable, Hashable, Sendable {
     var style: String
     var seed: UInt64
 
+    /// Variants offered in Settings. Any seed works; the range just keeps the field readable.
+    static let seedRange: ClosedRange<UInt64> = 1...99_999
+
     /// Seeds 6 and 2 kept the most even pitch across different phrases in a scan of seeds 1–8.
     static let defaultMale = NeuralVoice(gender: .male, style: VoiceGender.male.defaultStyle, seed: 6)
     static let defaultFemale = NeuralVoice(gender: .female, style: VoiceGender.female.defaultStyle, seed: 2)

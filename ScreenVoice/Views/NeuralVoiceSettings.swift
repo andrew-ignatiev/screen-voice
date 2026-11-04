@@ -55,10 +55,14 @@ struct NeuralVoiceSettings: View {
         }
 
         LabeledContent("Voice variant") {
-            HStack {
-                Text("Variant \(settings.neuralVoice.seed)")
+            HStack(spacing: 4) {
+                TextField("Voice variant", value: variantSelection, format: .number.grouping(.never))
+                    .labelsHidden()
+                    .multilineTextAlignment(.trailing)
                     .monospacedDigit()
-                Button("Try Another") { coordinator.nextNeuralVoiceVariant() }
+                    .frame(width: 64)
+                Stepper("Voice variant", value: variantSelection, in: NeuralVoice.seedRange)
+                    .labelsHidden()
             }
         }
         Text("Each variant is a different voice that fits the description. The same variant always sounds the same.")
@@ -109,6 +113,15 @@ struct NeuralVoiceSettings: View {
             set: { id in
                 if let id { store.settings.applyVoicePreset(id: id) }
             }
+        )
+    }
+
+    /// Typed values outside the range are clamped, so the variant is never 0 or absurdly large.
+    private var variantSelection: Binding<UInt64> {
+        let store = coordinator.settingsStore
+        return Binding(
+            get: { store.settings.neuralVoice.seed },
+            set: { store.settings.neuralVoice.seed = min(max($0, NeuralVoice.seedRange.lowerBound), NeuralVoice.seedRange.upperBound) }
         )
     }
 

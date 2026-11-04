@@ -10,14 +10,9 @@ enum SourceLanguage: String, CaseIterable, Codable, Identifiable, Sendable {
 
     var id: String { rawValue }
 
+    /// Language name in the user's interface language, provided by the system.
     var displayName: String {
-        switch self {
-        case .english: "Английский"
-        case .german: "Немецкий"
-        case .french: "Французский"
-        case .spanish: "Испанский"
-        case .japanese: "Японский"
-        }
+        AppSettings.languageName(rawValue)
     }
 
     /// Language used by the Translation framework.
@@ -46,8 +41,8 @@ enum OCRAccuracy: String, CaseIterable, Codable, Identifiable, Sendable {
 
     var displayName: String {
         switch self {
-        case .accurate: "Точная"
-        case .fast: "Быстрая"
+        case .accurate: String(localized: "Accurate", comment: "OCR mode")
+        case .fast: String(localized: "Fast", comment: "OCR mode")
         }
     }
 }
@@ -63,8 +58,8 @@ enum SpeechEngineKind: String, CaseIterable, Codable, Identifiable, Sendable {
 
     var displayName: String {
         switch self {
-        case .system: "Системный голос"
-        case .qwen: "Qwen3-TTS (нейросеть)"
+        case .system: String(localized: "System voice")
+        case .qwen: String(localized: "Qwen3-TTS (neural)")
         }
     }
 }
@@ -72,6 +67,15 @@ enum SpeechEngineKind: String, CaseIterable, Codable, Identifiable, Sendable {
 struct AppSettings: Codable, Equatable, Sendable {
     /// The MVP always translates into Russian.
     static let targetLanguage = Locale.Language(identifier: "ru")
+
+    /// "Russian" in the user's interface language.
+    static var targetLanguageName: String { languageName("ru") }
+
+    /// Capitalized language name in the current locale, e.g. "German" or "Немецкий".
+    static func languageName(_ code: String) -> String {
+        let name = Locale.current.localizedString(forLanguageCode: code) ?? code
+        return name.prefix(1).uppercased(with: .current) + name.dropFirst()
+    }
 
     var sourceLanguage: SourceLanguage = .english
     var speechEngine: SpeechEngineKind = .system

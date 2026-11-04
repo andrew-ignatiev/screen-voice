@@ -67,6 +67,7 @@ final class SpeechService {
     @ObservationIgnored private var current: (id: Int, engine: SpeechEngineKind)?
     @ObservationIgnored private var lastPhraseID = 0
 
+    /// Spoken content, not UI: always Russian (the target language), never localized.
     static let previewText = "Привет! Так будет звучать перевод субтитров."
 
     init(qwen: QwenVoiceController = QwenVoiceController()) {

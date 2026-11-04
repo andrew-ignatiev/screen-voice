@@ -154,11 +154,11 @@
 				};
 			};
 			buildConfigurationList = 5C0000000000000000000501 /* Build configuration list for PBXProject "ScreenVoice" */;
-			developmentRegion = ru;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				ru,
 				en,
+				ru,
 				Base,
 			);
 			mainGroup = 5C0000000000000000000002;

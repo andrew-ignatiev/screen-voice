@@ -182,7 +182,7 @@ final class PipelineCoordinator {
                     lines = try await ocr.recognize(frame, options: snapshot.ocr)
                     events.yield(.recognized(lines: lines, duration: ProcessInfo.processInfo.systemUptime - ocrStart))
                 } catch {
-                    events.yield(.failure("Ошибка распознавания: \(error.localizedDescription)"))
+                    events.yield(.failure(String(localized: "Recognition error: \(error.localizedDescription)")))
                 }
             }
 
@@ -216,7 +216,7 @@ final class PipelineCoordinator {
             } catch is CancellationError {
                 break
             } catch {
-                events.yield(.failure("Ошибка перевода: \(error.localizedDescription)"))
+                events.yield(.failure(String(localized: "Translation error: \(error.localizedDescription)")))
             }
             events.yield(.translating(false))
         }

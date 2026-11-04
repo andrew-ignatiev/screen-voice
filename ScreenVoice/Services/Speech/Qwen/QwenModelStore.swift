@@ -58,9 +58,9 @@ enum QwenModelStoreError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .badResponse(let file, let code): "Сервер вернул ошибку \(code) для \(file)."
-        case .sizeMismatch(let file): "Файл \(file) загружен не полностью."
-        case .checksumMismatch(let file): "Контрольная сумма \(file) не совпадает."
+        case .badResponse(let file, let code): String(localized: "The server returned error \(code) for \(file).")
+        case .sizeMismatch(let file): String(localized: "\(file) was only partly downloaded.")
+        case .checksumMismatch(let file): String(localized: "The checksum of \(file) doesn’t match.")
         }
     }
 }

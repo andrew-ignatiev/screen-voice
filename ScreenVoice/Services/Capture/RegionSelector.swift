@@ -130,7 +130,7 @@ private final class SelectionView: NSView {
             size.draw(at: CGPoint(x: rect.minX + 4, y: rect.maxY + 6), withAttributes: Self.labelAttributes)
         }
 
-        let hint = "Выделите область с субтитрами. Esc — отмена." as NSString
+        let hint = String(localized: "Drag to select the subtitle area. Press Esc to cancel.") as NSString
         let hintSize = hint.size(withAttributes: Self.hintAttributes)
         hint.draw(
             at: CGPoint(x: bounds.midX - hintSize.width / 2, y: bounds.maxY - hintSize.height - 80),

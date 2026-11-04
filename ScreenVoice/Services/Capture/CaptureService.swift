@@ -20,13 +20,13 @@ enum CaptureError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .permissionDenied:
-            "Нет разрешения на запись экрана. Включите ScreenVoice в «Системные настройки → Конфиденциальность и безопасность → Запись экрана и системного звука»."
+            String(localized: "No screen recording permission. Turn on ScreenVoice in System Settings → Privacy & Security → Screen & System Audio Recording.")
         case .windowNotFound:
-            "Выбранное окно больше недоступно. Выберите источник заново."
+            String(localized: "The selected window is no longer available. Choose the source again.")
         case .displayNotFound:
-            "Дисплей с выбранной областью не найден. Выделите область заново."
+            String(localized: "The display with the selected region wasn’t found. Select the region again.")
         case .emptyRegion:
-            "Выбранная область слишком мала."
+            String(localized: "The selected region is too small.")
         }
     }
 }

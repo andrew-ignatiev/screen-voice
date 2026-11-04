@@ -40,9 +40,9 @@ struct MainView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 SettingsLink {
-                    Label("Настройки", systemImage: "gearshape")
+                    Label("Settings", systemImage: "gearshape")
                 }
-                .help("Настройки: язык, голос, имена перед двоеточием (⌘,)")
+                .help("Settings: language, voice, names before a colon (⌘,)")
             }
         }
         .sheet(isPresented: $isPickingSource) {
@@ -68,14 +68,14 @@ struct MainView: View {
     }
 
     private var sourceSection: some View {
-        GroupBox("Источник") {
+        GroupBox("Source") {
             HStack {
-                Text(coordinator.state.source?.description ?? "Не выбран")
+                Text(coordinator.state.source?.description ?? String(localized: "Not selected"))
                     .foregroundStyle(coordinator.state.source == nil ? .secondary : .primary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Spacer()
-                Button("Выбрать область/окно…") { isPickingSource = true }
+                Button("Choose Region or Window…") { isPickingSource = true }
                     .disabled(coordinator.state.runState != .idle)
             }
             .padding(6)
@@ -88,7 +88,7 @@ struct MainView: View {
             Button {
                 Task { await coordinator.start() }
             } label: {
-                Label("Старт", systemImage: "play.fill")
+                Label("Start", systemImage: "play.fill")
             }
             .keyboardShortcut("r", modifiers: .command)
             .disabled(state.runState != .idle || state.source == nil)
@@ -97,13 +97,13 @@ struct MainView: View {
                 Button {
                     coordinator.resume()
                 } label: {
-                    Label("Продолжить", systemImage: "playpause.fill")
+                    Label("Resume", systemImage: "playpause.fill")
                 }
             } else {
                 Button {
                     coordinator.pause()
                 } label: {
-                    Label("Пауза", systemImage: "pause.fill")
+                    Label("Pause", systemImage: "pause.fill")
                 }
                 .disabled(state.runState != .running)
             }
@@ -111,7 +111,7 @@ struct MainView: View {
             Button {
                 Task { await coordinator.stop() }
             } label: {
-                Label("Стоп", systemImage: "stop.fill")
+                Label("Stop", systemImage: "stop.fill")
             }
             .disabled(!state.isCaptureActive)
 
@@ -136,25 +136,25 @@ struct MainView: View {
                 Divider()
 
                 HStack(spacing: 12) {
-                    Toggle("Плавающая панель", isOn: Binding(
+                    Toggle("Floating panel", isOn: Binding(
                         get: { coordinator.settings.showOverlay },
                         set: { coordinator.setOverlayVisible($0) }
                     ))
                     Spacer()
                     if coordinator.speech.queuedCount > 0 {
-                        Text("В очереди: \(coordinator.speech.queuedCount)")
+                        Text("In queue: \(coordinator.speech.queuedCount)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    Button("Пропустить реплику") { coordinator.speech.skipCurrent() }
+                    Button("Skip Line") { coordinator.speech.skipCurrent() }
                         .disabled(!coordinator.speech.isSpeaking)
-                    Button("Очистить очередь") { coordinator.speech.clearQueue() }
+                    Button("Clear Queue") { coordinator.speech.clearQueue() }
                         .disabled(coordinator.speech.queuedCount == 0)
                 }
                 .font(.callout)
 
                 if let duration = state.lastOCRDuration, state.isCaptureActive {
-                    Text("OCR: \(Int(duration * 1000)) мс · строк: \(state.recognizedLines.count)")
+                    Text("OCR: \(Int(duration * 1000)) ms · lines: \(state.recognizedLines.count)")
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.tertiary)
                 }
@@ -162,14 +162,14 @@ struct MainView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(6)
         } label: {
-            Text("Сейчас")
+            Text("Now")
         }
     }
 
     private var historySection: some View {
-        GroupBox("История") {
+        GroupBox("History") {
             if coordinator.state.history.isEmpty {
-                Text("Переведённые реплики появятся здесь.")
+                Text("Translated lines will appear here.")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(6)
@@ -217,13 +217,13 @@ private struct PermissionBanner: View {
     var body: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 8) {
-                Label("Нужно разрешение на запись экрана", systemImage: "rectangle.dashed.badge.record")
+                Label("Screen recording permission required", systemImage: "rectangle.dashed.badge.record")
                     .font(.headline)
-                Text("ScreenVoice читает текст только из выбранного окна или области и не сохраняет кадры. Включите ScreenVoice в «Системные настройки → Конфиденциальность и безопасность → Запись экрана и системного звука». После включения macOS может попросить перезапустить приложение.")
+                Text("ScreenVoice reads text only from the chosen window or region and never saves frames. Turn on ScreenVoice in System Settings → Privacy & Security → Screen & System Audio Recording. macOS may ask you to relaunch the app afterwards.")
                     .fixedSize(horizontal: false, vertical: true)
                 HStack {
-                    Button("Запросить разрешение") { coordinator.requestPermission() }
-                    Button("Открыть Системные настройки") { coordinator.openScreenRecordingSettings() }
+                    Button("Request Permission") { coordinator.requestPermission() }
+                    Button("Open System Settings") { coordinator.openScreenRecordingSettings() }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -238,11 +238,11 @@ private struct VoiceBanner: View {
     var body: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 8) {
-                Label("Русский голос не установлен", systemImage: "speaker.slash")
+                Label("No Russian voice installed", systemImage: "speaker.slash")
                     .font(.headline)
-                Text("Откройте «Системные настройки → Универсальный доступ → Устный контент → Системный голос → Управление голосами…» и загрузите русский голос, например Milena.")
+                Text("Open System Settings → Accessibility → Spoken Content → System Voice → Manage Voices… and download a Russian voice, for example Milena.")
                     .fixedSize(horizontal: false, vertical: true)
-                Button("Открыть настройки устного контента") { coordinator.openSpokenContentSettings() }
+                Button("Open Spoken Content Settings") { coordinator.openSpokenContentSettings() }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(6)
@@ -254,9 +254,9 @@ private struct NeuralModelBanner: View {
     var body: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 8) {
-                Label("Модель Qwen3-TTS не загружена", systemImage: "waveform.badge.exclamationmark")
+                Label("Qwen3-TTS model not downloaded", systemImage: "waveform.badge.exclamationmark")
                     .font(.headline)
-                Text("Выбран нейросетевой голос, но модель ещё не загружена. Пока фразы озвучиваются системным голосом.")
+                Text("The neural voice is selected, but its model isn’t downloaded yet. Until then, phrases are spoken with the system voice.")
                     .fixedSize(horizontal: false, vertical: true)
                 NeuralModelRow()
             }
@@ -271,32 +271,33 @@ private struct TranslationBanner: View {
 
     var body: some View {
         let language = coordinator.settings.sourceLanguage.displayName
+        let target = AppSettings.targetLanguageName
         switch coordinator.state.translationAvailability {
         case .installed, .unknown, .checking:
             EmptyView()
         case .needsDownload:
             banner(
-                title: "Нужна языковая модель",
-                text: "Модель перевода «\(language) → Русский» ещё не загружена на этот Mac.",
+                title: String(localized: "Language model required"),
+                text: String(localized: "The “\(language) → \(target)” translation model isn’t downloaded to this Mac yet."),
                 icon: "arrow.down.circle"
             ) {
-                Button("Загрузить модель") { coordinator.requestModelDownload() }
+                Button("Download Model") { coordinator.requestModelDownload() }
             }
         case .downloading:
-            banner(title: "Загрузка языковой модели…", text: "Подтвердите загрузку в системном окне. Перевод начнёт работать после её завершения.", icon: "arrow.down.circle") {
+            banner(title: String(localized: "Downloading language model…"), text: String(localized: "Confirm the download in the system dialog. Translation starts working once it finishes."), icon: "arrow.down.circle") {
                 ProgressView().controlSize(.small)
             }
         case .unsupported:
             banner(
-                title: "Языковая пара не поддерживается",
-                text: "Apple Translation на этом Mac не поддерживает перевод «\(language) → Русский». Выберите другой исходный язык в настройках.",
+                title: String(localized: "Language pair not supported"),
+                text: String(localized: "Apple Translation on this Mac doesn’t support “\(language) → \(target)”. Choose another source language in Settings."),
                 icon: "xmark.octagon"
             ) {
-                SettingsLink { Text("Открыть настройки") }
+                SettingsLink { Text("Open Settings") }
             }
         case .failed(let message):
-            banner(title: "Не удалось подготовить перевод", text: message, icon: "exclamationmark.triangle") {
-                Button("Повторить") { coordinator.requestModelDownload() }
+            banner(title: String(localized: "Couldn’t prepare translation"), text: message, icon: "exclamationmark.triangle") {
+                Button("Retry") { coordinator.requestModelDownload() }
             }
         }
     }
@@ -309,8 +310,8 @@ private struct TranslationBanner: View {
     ) -> some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 8) {
-                Label(title, systemImage: icon).font(.headline)
-                Text(text).fixedSize(horizontal: false, vertical: true)
+                Label { Text(verbatim: title) } icon: { Image(systemName: icon) }.font(.headline)
+                Text(verbatim: text).fixedSize(horizontal: false, vertical: true)
                 HStack { actions() }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

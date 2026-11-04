@@ -6,7 +6,7 @@ ScreenVoice is a native macOS app that reads subtitles (or any text) from a wind
 
 Typical use: a film, stream, or game with English subtitles, and you want to *hear* them in Russian.
 
-> **Status:** MVP. The UI is in Russian; the target language is Russian.
+> **Status:** MVP. The interface is available in English and Russian and follows your macOS language. Text is always translated into, and spoken in, Russian.
 
 ## Contents
 
@@ -18,6 +18,7 @@ Typical use: a film, stream, or game with English subtitles, and you want to *he
 - [How it works](#how-it-works)
 - [Neural voice (Qwen3-TTS)](#neural-voice-qwen3-tts)
 - [Project structure](#project-structure)
+- [Localization](#localization)
 - [Tests](#tests)
 - [Privacy](#privacy)
 - [Known limitations](#known-limitations)
@@ -83,11 +84,11 @@ tccutil reset ScreenCapture app.screenvoice.ScreenVoice
 ## Usage
 
 1. On first launch, grant **Screen & System Audio Recording** (System Settings → Privacy & Security). macOS may ask you to relaunch the app.
-2. Click **«Выбрать область/окно…»** (Choose region/window). Selecting only the subtitle strip gives the best speed and accuracy.
-3. If a language-model warning appears, click **«Загрузить модель»** (Download model) and confirm. This is Apple Translation's model for the language pair.
-4. Optional: choose the neural voice in **Settings → Озвучка → Движок → Qwen3-TTS** and click **«Загрузить»** (Download), about 1.9 GB.
-5. Click **«Старт»** (Start). Translations appear in the floating panel and are spoken.
-6. **«Пауза»** (Pause) pauses recognition and speech; **«Стоп»** (Stop) stops capture and unloads the neural model. **«Пропустить реплику»** (Skip line) and **«Очистить очередь»** (Clear queue) control the speech queue.
+2. Click **Choose Region or Window…**. Selecting only the subtitle strip gives the best speed and accuracy.
+3. If a language-model warning appears, click **Download Model** and confirm. This is Apple Translation's model for the language pair.
+4. Optional: choose the neural voice in **Settings → Speech → Engine → Qwen3-TTS (neural)** and click **Download**, about 1.9 GB.
+5. Click **Start**. Translations appear in the floating panel and are spoken.
+6. **Pause** pauses recognition and speech; **Stop** stops capture and unloads the neural model. **Skip Line** and **Clear Queue** control the speech queue.
 
 The menu-bar icon (filled while capturing) offers Start / Pause / Resume / Stop, the floating-panel toggle, Settings and Quit.
 
@@ -108,13 +109,13 @@ Open with **ScreenVoice → Settings…** (⌘,) or from the menu-bar icon. Sett
 |---|---|---|---|
 | Engine | System voice / Qwen3-TTS (neural) | System voice | Qwen falls back to the system voice while the model is missing, loading, or failing |
 | Model *(Qwen)* | Download / progress / Delete | – | 1.9 GB, verified by SHA-256 |
-| Qwen voice *(Qwen)* | Variant N + «Другой голос» (another voice) | Variant 1 | Each variant is a different generated voice; see [Placeholder voice](#placeholder-voice) |
-| Voice / Fallback voice | Best installed Russian, or a specific ru-RU voice | Best installed | Used by the system engine, and as the fallback for Qwen |
+| Qwen voice *(Qwen)* | Variant N + **Another voice** | Variant 1 | Each variant is a different generated voice; see [Placeholder voice](#placeholder-voice) |
+| Voice / Fallback voice | Best installed Russian voice, or a specific ru-RU voice | Best installed | Used by the system engine, and as the fallback for Qwen |
 | Speed | Slider | Normal | System: `AVSpeechUtterance` rate. Qwen: 0.5×–2× time-stretch, pitch preserved |
 | Volume | 0–100 % | 100 % | Speech volume only; the video's volume is not changed |
-| Skip name before colon | On / Off | On | Doesn't speak speaker labels such as "Dutch:" |
+| Don’t speak the name before a colon | On / Off | On | Doesn't speak speaker labels such as "Dutch:" |
 | Max queued phrases | 1–10 | 3 | When full, the oldest waiting phrase is dropped |
-| Preview («Прослушать») | Button | – | Speaks a sample phrase with the current engine |
+| Preview | Button | – | Speaks a sample phrase with the current engine |
 
 ### Recognition
 
@@ -122,7 +123,7 @@ Open with **ScreenVoice → Settings…** (⌘,) or from the menu-bar icon. Sett
 |---|---|---|---|
 | Analysis rate | 1–10 frames/s | 4 | How often OCR runs. Lower means less CPU and a slower reaction |
 | OCR mode | Accurate / Fast | Accurate | Fast is Latin-script only (Japanese always uses Accurate) |
-| Min OCR confidence | 10–90 % | 40 % | Lines below this confidence are ignored |
+| Min. OCR confidence | 10–90 % | 40 % | Lines below this confidence are ignored |
 
 ### Display
 
@@ -284,7 +285,7 @@ flowchart LR
     R --> T["Every phrase is generated<br/>in that same voice"]
 ```
 
-The same variant number always gives the same voice. «Другой голос» (another voice) moves to the next variant.
+The same variant number always gives the same voice. **Another voice** moves to the next variant.
 
 ### Behaviour details
 
@@ -318,11 +319,32 @@ ScreenVoice/
 │           ├── QwenVoiceController.swift Ordered load/unload, state for the UI
 │           └── QwenPhraseSpeaker.swift   AVAudioEngine streaming playback
 ├── Views/                            Main window, source picker, settings, overlay, menu bar
-└── Resources/                        Asset catalog
+└── Resources/
+    ├── Localizable.xcstrings         String Catalog: English source + Russian translation
+    └── Assets.xcassets               App icon, accent colour
 ScreenVoiceTests/                     Swift Testing suites
 ```
 
 Dependencies (Swift Package Manager, pinned in `ScreenVoice.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved`): `mlx-swift` (`MLX`), `mlx-audio-swift` (`MLXAudioCore`, `MLXAudioTTS`) and their transitive packages.
+
+## Localization
+
+The interface is written in English (the development language) and translated with an Xcode **String Catalog**, `ScreenVoice/Resources/Localizable.xcstrings`. The app follows the macOS language: a Mac set to Russian shows the Russian interface, any other language shows English. To pick a language for this app only, use System Settings → General → Language & Region → Applications.
+
+| Language | Status |
+|---|---|
+| English | Source language |
+| Russian | Complete (123 of 123 strings) |
+
+How strings are handled in code:
+
+- SwiftUI literals (`Text("Start")`, `Button("Retry")`, `Label`, `Section`, `.help`) are localization keys automatically.
+- Strings built outside views (status text, errors, enum names) use `String(localized:)`. A `comment:` disambiguates short words, e.g. "Paused" as a status.
+- Interpolated values become format specifiers (`"In queue: %lld"`); translations use positional arguments (`%1$@`, `%2$@`) where word order may change.
+- Language names come from `Locale.localizedString(forLanguageCode:)`, so the system translates them.
+- Text the app *speaks* (the preview phrase, the Qwen reference sentence) is content in the target language and is intentionally not localized.
+
+To add a language: open `Localizable.xcstrings` in Xcode, click **+** to add the language, translate every string, and add the language code to `knownRegions` (Xcode does this when you add it in Project → Info → Localizations). Building in Xcode adds new strings to the catalog automatically.
 
 ## Tests
 
@@ -337,6 +359,7 @@ xcodebuild -project ScreenVoice.xcodeproj -scheme ScreenVoice -destination 'plat
 | `TextChangeDetectorTests` | Stabilization, de-duplication, OCR jitter, multi-line merge, rolling captions, normalization |
 | `PipelineTests` | Bounded speech queue, stale-phrase skipping, settings → pipeline, settings compatibility, region geometry |
 | `SpeakerLabelFilterTests` | Speaker-label stripping rules |
+| `LocalizationTests` | English development language, Russian translations present, format strings with arguments, system language names, spoken text stays Russian |
 | `NeuralVoiceTests` | Engine settings, speed mapping, model install checks, plus **end-to-end Russian synthesis** and serialized generation (these two run only when the model is installed in the app container) |
 
 ## Privacy
@@ -352,7 +375,7 @@ xcodebuild -project ScreenVoice.xcodeproj -scheme ScreenVoice -destination 'plat
 - The app doesn't lower the video's volume; speech plays on top.
 - Latency depends on region size, analysis rate and Mac model. Qwen latency under full OCR and translation load hasn't been measured yet.
 - The Qwen voice is a generated placeholder; a designed Russian voice is planned.
-- The UI is in Russian only.
+- Only English and Russian interface translations so far.
 
 ## Credits and licenses
 

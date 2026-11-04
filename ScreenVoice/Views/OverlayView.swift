@@ -23,7 +23,7 @@ struct OverlayView: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                .help("Скрыть панель (обработка продолжится)")
+                .help("Hide panel (processing continues)")
             }
 
             if !state.currentOriginal.isEmpty {
@@ -33,7 +33,7 @@ struct OverlayView: View {
                     .lineLimit(3)
             }
 
-            Text(state.currentTranslation.isEmpty ? "Перевод появится здесь" : state.currentTranslation)
+            Text(state.currentTranslation.isEmpty ? String(localized: "The translation will appear here") : state.currentTranslation)
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(state.currentTranslation.isEmpty ? .secondary : .primary)
                 .lineLimit(4)

@@ -1,0 +1,1250 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@ was only partly downloaded.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл %@ загружен не полностью."
+          }
+        }
+      }
+    },
+    "%lld%%": {
+      "shouldTranslate": false
+    },
+    "Accurate": {
+      "comment": "OCR mode",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Точная"
+          }
+        }
+      }
+    },
+    "Analysis rate: %lld fps": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Частота анализа: %lld кадр/с"
+          }
+        }
+      }
+    },
+    "Another voice": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Другой голос"
+          }
+        }
+      }
+    },
+    "Apple Translation on this Mac doesn’t support the selected language pair.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбранная языковая пара не поддерживается Apple Translation на этом Mac."
+          }
+        }
+      }
+    },
+    "Apple Translation on this Mac doesn’t support “%@ → %@”. Choose another source language in Settings.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Translation на этом Mac не поддерживает перевод «%1$@ → %2$@». Выберите другой исходный язык в настройках."
+          }
+        }
+      }
+    },
+    "Best installed Russian voice": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лучший установленный русский"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отмена"
+          }
+        }
+      }
+    },
+    "Capture active": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Захват активен"
+          }
+        }
+      }
+    },
+    "Capture stopped by the system.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Захват остановлен системой."
+          }
+        }
+      }
+    },
+    "Capture stopped by the system: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Захват остановлен системой: %@"
+          }
+        }
+      }
+    },
+    "Choose Region or Window…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбрать область/окно…"
+          }
+        }
+      }
+    },
+    "Choose Window": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбрать окно"
+          }
+        }
+      }
+    },
+    "Choose a window or screen region first.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сначала выберите окно или область экрана."
+          }
+        }
+      }
+    },
+    "Clear Queue": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Очистить очередь"
+          }
+        }
+      }
+    },
+    "Confirm the download in the system dialog. Translation starts working once it finishes.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подтвердите загрузку в системном окне. Перевод начнёт работать после её завершения."
+          }
+        }
+      }
+    },
+    "Couldn’t check translation availability.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось проверить доступность перевода."
+          }
+        }
+      }
+    },
+    "Couldn’t prepare translation": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось подготовить перевод"
+          }
+        }
+      }
+    },
+    "Delete": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить"
+          }
+        }
+      }
+    },
+    "Display": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отображение"
+          }
+        }
+      }
+    },
+    "Don’t speak the name before a colon": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не озвучивать имя перед двоеточием"
+          }
+        }
+      }
+    },
+    "Download (%@)": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Загрузить (%@)"
+          }
+        }
+      }
+    },
+    "Download Model": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Загрузить модель"
+          }
+        }
+      }
+    },
+    "Downloading language model…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Загрузка языковой модели…"
+          }
+        }
+      }
+    },
+    "Drag to select the subtitle area. Press Esc to cancel.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выделите область с субтитрами. Esc — отмена."
+          }
+        }
+      }
+    },
+    "Engine": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Движок"
+          }
+        }
+      }
+    },
+    "Entire Main Display": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Весь главный экран"
+          }
+        }
+      }
+    },
+    "Error": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ошибка"
+          }
+        }
+      }
+    },
+    "Error: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ошибка: %@"
+          }
+        }
+      }
+    },
+    "Fallback voice": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запасной голос"
+          }
+        }
+      }
+    },
+    "Fast": {
+      "comment": "OCR mode",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Быстрая"
+          }
+        }
+      }
+    },
+    "Floating panel": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Плавающая панель"
+          }
+        }
+      }
+    },
+    "For best results, select just the subtitle strip: recognition is faster and more accurate.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лучше всего выделить только полосу с субтитрами: так распознавание быстрее и точнее."
+          }
+        }
+      }
+    },
+    "Hide panel (processing continues)": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрыть панель (обработка продолжится)"
+          }
+        }
+      }
+    },
+    "History": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "История"
+          }
+        }
+      }
+    },
+    "Idle": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ожидание"
+          }
+        }
+      }
+    },
+    "In queue: %lld": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В очереди: %lld"
+          }
+        }
+      }
+    },
+    "Installed": {
+      "comment": "Qwen model state",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установлена"
+          }
+        }
+      }
+    },
+    "Language model required": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нужна языковая модель"
+          }
+        }
+      }
+    },
+    "Language pair not supported": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Языковая пара не поддерживается"
+          }
+        }
+      }
+    },
+    "Languages": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Языки"
+          }
+        }
+      }
+    },
+    "Loading into memory…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Загружается в память…"
+          }
+        }
+      }
+    },
+    "Loading voice model…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Загрузка модели озвучки…"
+          }
+        }
+      }
+    },
+    "Max queued phrases: %lld": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фраз в очереди не больше: %lld"
+          }
+        }
+      }
+    },
+    "Min. OCR confidence: %lld%%": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мин. уверенность OCR: %lld%%"
+          }
+        }
+      }
+    },
+    "Model": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Модель"
+          }
+        }
+      }
+    },
+    "No Russian voice installed": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Русский голос не установлен"
+          }
+        }
+      }
+    },
+    "No screen recording permission. Turn on ScreenVoice in System Settings → Privacy & Security → Screen & System Audio Recording.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет разрешения на запись экрана. Включите ScreenVoice в «Системные настройки → Конфиденциальность и безопасность → Запись экрана и системного звука»."
+          }
+        }
+      }
+    },
+    "Not selected": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не выбран"
+          }
+        }
+      }
+    },
+    "Now": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сейчас"
+          }
+        }
+      }
+    },
+    "OCR mode": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Режим OCR"
+          }
+        }
+      }
+    },
+    "OCR: %lld ms · lines: %lld": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OCR: %1$lld мс · строк: %2$lld"
+          }
+        }
+      }
+    },
+    "Open ScreenVoice": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть ScreenVoice"
+          }
+        }
+      }
+    },
+    "Open Settings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть настройки"
+          }
+        }
+      }
+    },
+    "Open Spoken Content Settings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть настройки устного контента"
+          }
+        }
+      }
+    },
+    "Open System Settings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть Системные настройки"
+          }
+        }
+      }
+    },
+    "Open System Settings → Accessibility → Spoken Content → System Voice → Manage Voices… and download a Russian voice, for example Milena.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Откройте «Системные настройки → Универсальный доступ → Устный контент → Системный голос → Управление голосами…» и загрузите русский голос, например Milena."
+          }
+        }
+      }
+    },
+    "Or an App Window": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Или окно приложения"
+          }
+        }
+      }
+    },
+    "Pause": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пауза"
+          }
+        }
+      }
+    },
+    "Paused": {
+      "comment": "Status: capture is paused",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пауза"
+          }
+        }
+      }
+    },
+    "Preview": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прослушать"
+          }
+        }
+      }
+    },
+    "Quit ScreenVoice": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выйти"
+          }
+        }
+      }
+    },
+    "Qwen voice": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Голос Qwen"
+          }
+        }
+      }
+    },
+    "Qwen3-TTS (neural)": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qwen3-TTS (нейросеть)"
+          }
+        }
+      }
+    },
+    "Qwen3-TTS model not downloaded": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Модель Qwen3-TTS не загружена"
+          }
+        }
+      }
+    },
+    "Qwen3-TTS voice unavailable: %@ Using the system voice.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Голос Qwen3-TTS недоступен: %@ Используется системный голос."
+          }
+        }
+      }
+    },
+    "Ready": {
+      "comment": "Qwen model state",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Готова"
+          }
+        }
+      }
+    },
+    "Recognition": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Распознавание"
+          }
+        }
+      }
+    },
+    "Recognition error: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ошибка распознавания: %@"
+          }
+        }
+      }
+    },
+    "Recognition, translation and speech run on this Mac. Frames and text are never saved to disk or sent anywhere.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Распознавание, перевод и озвучка выполняются на этом Mac. Кадры и текст не сохраняются на диск и никуда не отправляются."
+          }
+        }
+      }
+    },
+    "Recognizing": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Распознавание"
+          }
+        }
+      }
+    },
+    "Refresh window list": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обновить список окон"
+          }
+        }
+      }
+    },
+    "Region %lld×%lld on display %u": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Область %1$lld×%2$lld на дисплее %3$u"
+          }
+        }
+      }
+    },
+    "Request Permission": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запросить разрешение"
+          }
+        }
+      }
+    },
+    "Resume": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продолжить"
+          }
+        }
+      }
+    },
+    "Retry": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повторить"
+          }
+        }
+      }
+    },
+    "Screen recording permission required": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нужно разрешение на запись экрана"
+          }
+        }
+      }
+    },
+    "ScreenVoice": {
+      "shouldTranslate": false
+    },
+    "ScreenVoice reads text only from the chosen window or region and never saves frames. Turn on ScreenVoice in System Settings → Privacy & Security → Screen & System Audio Recording. macOS may ask you to relaunch the app afterwards.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ScreenVoice читает текст только из выбранного окна или области и не сохраняет кадры. Включите ScreenVoice в «Системные настройки → Конфиденциальность и безопасность → Запись экрана и системного звука». После включения macOS может попросить перезапустить приложение."
+          }
+        }
+      }
+    },
+    "Select Screen Region…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выделить область экрана…"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройки"
+          }
+        }
+      }
+    },
+    "Settings: language, voice, names before a colon (⌘,)": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройки: язык, голос, имена перед двоеточием (⌘,)"
+          }
+        }
+      }
+    },
+    "Settings…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройки…"
+          }
+        }
+      }
+    },
+    "Show floating panel": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показывать плавающую панель"
+          }
+        }
+      }
+    },
+    "Skip Line": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пропустить реплику"
+          }
+        }
+      }
+    },
+    "Source": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Источник"
+          }
+        }
+      }
+    },
+    "Source language": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Исходный язык"
+          }
+        }
+      }
+    },
+    "Speaking": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Озвучивание"
+          }
+        }
+      }
+    },
+    "Speech": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Озвучка"
+          }
+        }
+      }
+    },
+    "Speed": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скорость"
+          }
+        }
+      }
+    },
+    "Start": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Старт"
+          }
+        }
+      }
+    },
+    "Starting capture…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запуск захвата…"
+          }
+        }
+      }
+    },
+    "Stop": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Стоп"
+          }
+        }
+      }
+    },
+    "Stop capture to change the source language.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Остановите захват, чтобы сменить исходный язык."
+          }
+        }
+      }
+    },
+    "System voice": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Системный голос"
+          }
+        }
+      }
+    },
+    "Target language": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Язык перевода"
+          }
+        }
+      }
+    },
+    "Text Source": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Источник текста"
+          }
+        }
+      }
+    },
+    "The Qwen3-TTS model isn’t loaded.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Модель Qwen3-TTS не загружена."
+          }
+        }
+      }
+    },
+    "The checksum of %@ doesn’t match.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Контрольная сумма %@ не совпадает."
+          }
+        }
+      }
+    },
+    "The display with the selected region wasn’t found. Select the region again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дисплей с выбранной областью не найден. Выделите область заново."
+          }
+        }
+      }
+    },
+    "The language model for this pair isn’t downloaded. Click Download Model.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Языковая модель для выбранной пары не загружена. Нажмите «Загрузить модель»."
+          }
+        }
+      }
+    },
+    "The model folder doesn’t contain Qwen3-TTS.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Папка модели не содержит Qwen3-TTS."
+          }
+        }
+      }
+    },
+    "The neural voice is selected, but its model isn’t downloaded yet. Until then, phrases are spoken with the system voice.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбран нейросетевой голос, но модель ещё не загружена. Пока фразы озвучиваются системным голосом."
+          }
+        }
+      }
+    },
+    "The selected region is too small.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбранная область слишком мала."
+          }
+        }
+      }
+    },
+    "The selected window is no longer available. Choose the source again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбранное окно больше недоступно. Выберите источник заново."
+          }
+        }
+      }
+    },
+    "The server returned error %lld for %@.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сервер вернул ошибку %1$lld для %2$@."
+          }
+        }
+      }
+    },
+    "The translation will appear here": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перевод появится здесь"
+          }
+        }
+      }
+    },
+    "The “%@ → %@” translation model isn’t downloaded to this Mac yet.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Модель перевода «%1$@ → %2$@» ещё не загружена на этот Mac."
+          }
+        }
+      }
+    },
+    "Translated lines will appear here.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переведённые реплики появятся здесь."
+          }
+        }
+      }
+    },
+    "Translating": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перевод"
+          }
+        }
+      }
+    },
+    "Translation error: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ошибка перевода: %@"
+          }
+        }
+      }
+    },
+    "Translation isn’t prepared.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перевод не подготовлен."
+          }
+        }
+      }
+    },
+    "Until the voice is loaded, or if it fails, phrases are spoken with the system voice below.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пока голос не загружен или при ошибке фразы озвучиваются системным голосом ниже."
+          }
+        }
+      }
+    },
+    "Untitled": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Без названия"
+          }
+        }
+      }
+    },
+    "Variant %llu": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вариант %llu"
+          }
+        }
+      }
+    },
+    "Verifying files…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверка файлов…"
+          }
+        }
+      }
+    },
+    "Voice": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Голос"
+          }
+        }
+      }
+    },
+    "Volume": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Громкость"
+          }
+        }
+      }
+    },
+    "Waiting for screen recording permission": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ожидание разрешения на запись экрана"
+          }
+        }
+      }
+    },
+    "Window: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Окно: %@"
+          }
+        }
+      }
+    },
+    "enhanced": {
+      "comment": "Voice quality",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "улучшенный"
+          }
+        }
+      }
+    },
+    "premium": {
+      "comment": "Voice quality",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "премиум"
+          }
+        }
+      }
+    },
+    "standard": {
+      "comment": "Voice quality",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "стандартный"
+          }
+        }
+      }
+    },
+    "“Dutch: Something” is spoken as “Something”. The full text stays on screen.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Датч: Что-то там» будет произнесено как «Что-то там». На экране текст остаётся полным."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

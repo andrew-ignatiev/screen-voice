@@ -9,8 +9,8 @@ enum QwenSynthesizerError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .notLoaded: "Модель Qwen3-TTS не загружена."
-        case .unexpectedModel: "Папка модели не содержит Qwen3-TTS."
+        case .notLoaded: String(localized: "The Qwen3-TTS model isn’t loaded.")
+        case .unexpectedModel: String(localized: "The model folder doesn’t contain Qwen3-TTS.")
         }
     }
 }
@@ -23,6 +23,7 @@ enum QwenSynthesizerError: LocalizedError {
 /// overlaps a half-cancelled one.
 actor QwenSynthesizer {
     /// What the generated placeholder voice says. Also the reference transcript for voice conditioning.
+    /// Spoken content, not UI: always Russian, never localized.
     static let referenceText = "Добрый вечер. Сегодня я расскажу вам короткую историю о старом маяке на берегу холодного моря."
     static let language = "russian"
     /// Seconds of audio per streamed chunk. 0.5 s gives ~0.1 s to first audio on Apple silicon.

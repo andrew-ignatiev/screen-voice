@@ -38,9 +38,9 @@ enum CaptureSource: Equatable, Sendable {
     var description: String {
         switch self {
         case .window(let window):
-            "Окно: \(window.displayName)"
+            String(localized: "Window: \(window.displayName)")
         case .region(let region):
-            "Область \(Int(region.rect.width))×\(Int(region.rect.height)) на дисплее \(region.displayID)"
+            String(localized: "Region \(Int(region.rect.width))×\(Int(region.rect.height)) on display \(region.displayID)")
         }
     }
 }

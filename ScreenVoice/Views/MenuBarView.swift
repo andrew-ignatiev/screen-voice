@@ -15,30 +15,30 @@ struct MenuBarView: View {
 
         switch state.runState {
         case .idle, .starting:
-            Button("Старт") { Task { await coordinator.start() } }
+            Button("Start") { Task { await coordinator.start() } }
                 .disabled(state.source == nil || state.runState == .starting)
         case .running:
-            Button("Пауза") { coordinator.pause() }
-            Button("Стоп") { Task { await coordinator.stop() } }
+            Button("Pause") { coordinator.pause() }
+            Button("Stop") { Task { await coordinator.stop() } }
         case .paused:
-            Button("Продолжить") { coordinator.resume() }
-            Button("Стоп") { Task { await coordinator.stop() } }
+            Button("Resume") { coordinator.resume() }
+            Button("Stop") { Task { await coordinator.stop() } }
         }
 
-        Toggle("Плавающая панель", isOn: Binding(
+        Toggle("Floating panel", isOn: Binding(
             get: { coordinator.settings.showOverlay },
             set: { coordinator.setOverlayVisible($0) }
         ))
 
         Divider()
 
-        Button("Открыть ScreenVoice") {
+        Button("Open ScreenVoice") {
             openWindow(id: ScreenVoiceApp.mainWindowID)
             NSApp.activate()
         }
-        SettingsLink { Text("Настройки…") }
+        SettingsLink { Text("Settings…") }
         Divider()
-        Button("Выйти") { NSApp.terminate(nil) }
+        Button("Quit ScreenVoice") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }
 }

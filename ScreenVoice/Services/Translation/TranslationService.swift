@@ -9,11 +9,11 @@ enum TranslationServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notPrepared:
-            "Перевод не подготовлен."
+            String(localized: "Translation isn’t prepared.")
         case .modelNotInstalled:
-            "Языковая модель для выбранной пары не загружена. Нажмите «Загрузить модель»."
+            String(localized: "The language model for this pair isn’t downloaded. Click Download Model.")
         case .unsupportedPair:
-            "Выбранная языковая пара не поддерживается Apple Translation на этом Mac."
+            String(localized: "Apple Translation on this Mac doesn’t support the selected language pair.")
         }
     }
 }

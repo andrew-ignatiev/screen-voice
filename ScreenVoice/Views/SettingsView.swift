@@ -10,92 +10,92 @@ struct SettingsView: View {
         let isActive = coordinator.state.isCaptureActive
 
         Form {
-            Section("Языки") {
-                Picker("Исходный язык", selection: $store.settings.sourceLanguage) {
+            Section("Languages") {
+                Picker("Source language", selection: $store.settings.sourceLanguage) {
                     ForEach(SourceLanguage.allCases) { language in
                         Text(language.displayName).tag(language)
                     }
                 }
                 .disabled(isActive)
-                LabeledContent("Язык перевода", value: "Русский")
+                LabeledContent("Target language", value: AppSettings.targetLanguageName)
                 if isActive {
-                    Text("Остановите захват, чтобы сменить исходный язык.")
+                    Text("Stop capture to change the source language.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
 
-            Section("Озвучка") {
-                Picker("Движок", selection: $store.settings.speechEngine) {
+            Section("Speech") {
+                Picker("Engine", selection: $store.settings.speechEngine) {
                     ForEach(SpeechEngineKind.allCases) { engine in
                         Text(engine.displayName).tag(engine)
                     }
                 }
                 if store.settings.speechEngine == .qwen {
                     NeuralModelRow()
-                    LabeledContent("Голос Qwen") {
+                    LabeledContent("Qwen voice") {
                         HStack {
-                            Text("Вариант \(store.settings.qwenVoiceSeed)")
+                            Text("Variant \(store.settings.qwenVoiceSeed)")
                                 .monospacedDigit()
-                            Button("Другой голос") { coordinator.nextNeuralVoice() }
+                            Button("Another voice") { coordinator.nextNeuralVoice() }
                         }
                     }
-                    Text("Пока голос не загружен или при ошибке фразы озвучиваются системным голосом ниже.")
+                    Text("Until the voice is loaded, or if it fails, phrases are spoken with the system voice below.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Picker(store.settings.speechEngine == .qwen ? "Запасной голос" : "Голос", selection: $store.settings.voiceIdentifier) {
-                    Text("Лучший установленный русский").tag(String?.none)
+                Picker(store.settings.speechEngine == .qwen ? LocalizedStringKey("Fallback voice") : LocalizedStringKey("Voice"), selection: $store.settings.voiceIdentifier) {
+                    Text("Best installed Russian voice").tag(String?.none)
                     ForEach(voices, id: \.identifier) { voice in
-                        Text("\(voice.name) · \(Self.qualityName(voice.quality))").tag(Optional(voice.identifier))
+                        Text(verbatim: "\(voice.name) · \(Self.qualityName(voice.quality))").tag(Optional(voice.identifier))
                     }
                 }
-                LabeledContent("Скорость") {
+                LabeledContent("Speed") {
                     Slider(
                         value: $store.settings.speechRate,
                         in: AVSpeechUtteranceMinimumSpeechRate...AVSpeechUtteranceMaximumSpeechRate
                     )
                 }
-                LabeledContent("Громкость") {
+                LabeledContent("Volume") {
                     Slider(value: $store.settings.speechVolume, in: 0...1)
                 }
                 Toggle(isOn: $store.settings.skipSpeakerLabels) {
-                    Text("Не озвучивать имя перед двоеточием")
-                    Text("«Датч: Что-то там» будет произнесено как «Что-то там». На экране текст остаётся полным.")
+                    Text("Don’t speak the name before a colon")
+                    Text("“Dutch: Something” is spoken as “Something”. The full text stays on screen.")
                 }
                 Stepper(
-                    "Фраз в очереди не больше: \(store.settings.maxQueuedPhrases)",
+                    "Max queued phrases: \(store.settings.maxQueuedPhrases)",
                     value: $store.settings.maxQueuedPhrases,
                     in: AppSettings.queueRange
                 )
-                Button("Прослушать") { coordinator.previewVoice() }
+                Button("Preview") { coordinator.previewVoice() }
                     .disabled(isActive)
             }
 
-            Section("Распознавание") {
+            Section("Recognition") {
                 Stepper(
-                    "Частота анализа: \(Int(store.settings.framesPerSecond)) кадр/с",
+                    "Analysis rate: \(Int(store.settings.framesPerSecond)) fps",
                     value: $store.settings.framesPerSecond,
                     in: AppSettings.framesPerSecondRange,
                     step: 1
                 )
-                Picker("Режим OCR", selection: $store.settings.ocrAccuracy) {
+                Picker("OCR mode", selection: $store.settings.ocrAccuracy) {
                     ForEach(OCRAccuracy.allCases) { accuracy in
                         Text(accuracy.displayName).tag(accuracy)
                     }
                 }
                 .disabled(!store.settings.sourceLanguage.supportsFastRecognition)
-                LabeledContent("Мин. уверенность OCR: \(Int(store.settings.minimumConfidence * 100))%") {
+                LabeledContent("Min. OCR confidence: \(Int(store.settings.minimumConfidence * 100))%") {
                     Slider(value: $store.settings.minimumConfidence, in: 0.1...0.9)
                 }
             }
 
-            Section("Отображение") {
-                Toggle("Показывать плавающую панель", isOn: $store.settings.showOverlay)
+            Section("Display") {
+                Toggle("Show floating panel", isOn: $store.settings.showOverlay)
             }
 
             Section {
-                Text("Распознавание, перевод и озвучка выполняются на этом Mac. Кадры и текст не сохраняются на диск и никуда не отправляются.")
+                Text("Recognition, translation and speech run on this Mac. Frames and text are never saved to disk or sent anywhere.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -108,9 +108,9 @@ struct SettingsView: View {
 
     private static func qualityName(_ quality: AVSpeechSynthesisVoiceQuality) -> String {
         switch quality {
-        case .premium: "премиум"
-        case .enhanced: "улучшенный"
-        default: "стандартный"
+        case .premium: String(localized: "premium", comment: "Voice quality")
+        case .enhanced: String(localized: "enhanced", comment: "Voice quality")
+        default: String(localized: "standard", comment: "Voice quality")
         }
     }
 }
@@ -122,28 +122,28 @@ struct NeuralModelRow: View {
     var body: some View {
         let qwen = coordinator.speech.qwen
         let size = ByteCountFormatter.string(fromByteCount: qwen.modelStore.spec.totalBytes, countStyle: .file)
-        LabeledContent("Модель") {
+        LabeledContent("Model") {
             switch qwen.modelStore.state {
             case .notInstalled:
-                Button("Загрузить (\(size))") { coordinator.downloadNeuralModel() }
+                Button("Download (\(size))") { coordinator.downloadNeuralModel() }
             case .downloading(let fraction):
                 HStack {
                     ProgressView(value: fraction)
                         .frame(width: 140)
                     Text("\(Int(fraction * 100))%")
                         .monospacedDigit()
-                    Button("Отмена") { qwen.modelStore.cancelDownload() }
+                    Button("Cancel") { qwen.modelStore.cancelDownload() }
                 }
             case .verifying:
                 HStack {
                     ProgressView().controlSize(.small)
-                    Text("Проверка файлов…")
+                    Text("Verifying files…")
                 }
             case .installed:
                 HStack {
                     Text(Self.loadStateText(qwen.state))
                         .foregroundStyle(.secondary)
-                    Button("Удалить", role: .destructive) { coordinator.deleteNeuralModel() }
+                    Button("Delete", role: .destructive) { coordinator.deleteNeuralModel() }
                         .disabled(coordinator.state.isCaptureActive)
                 }
             case .failed(let message):
@@ -151,7 +151,7 @@ struct NeuralModelRow: View {
                     Text(message)
                         .foregroundStyle(.red)
                         .font(.caption)
-                    Button("Повторить") { coordinator.downloadNeuralModel() }
+                    Button("Retry") { coordinator.downloadNeuralModel() }
                 }
             }
         }
@@ -159,10 +159,10 @@ struct NeuralModelRow: View {
 
     private static func loadStateText(_ state: QwenVoiceState) -> String {
         switch state {
-        case .unloaded: "Установлена"
-        case .loading: "Загружается в память…"
-        case .ready: "Готова"
-        case .failed(let message): "Ошибка: \(message)"
+        case .unloaded: String(localized: "Installed", comment: "Qwen model state")
+        case .loading: String(localized: "Loading into memory…")
+        case .ready: String(localized: "Ready", comment: "Qwen model state")
+        case .failed(let message): String(localized: "Error: \(message)")
         }
     }
 }

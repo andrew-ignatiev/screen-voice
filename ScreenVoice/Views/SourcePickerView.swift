@@ -11,10 +11,10 @@ struct SourcePickerView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Источник текста")
+            Text("Text Source")
                 .font(.title2.weight(.semibold))
 
-            Text("Лучше всего выделить только полосу с субтитрами: так распознавание быстрее и точнее.")
+            Text("For best results, select just the subtitle strip: recognition is faster and more accurate.")
                 .foregroundStyle(.secondary)
 
             HStack {
@@ -22,27 +22,27 @@ struct SourcePickerView: View {
                     dismiss()
                     Task { await coordinator.selectRegion() }
                 } label: {
-                    Label("Выделить область экрана…", systemImage: "rectangle.dashed")
+                    Label("Select Screen Region…", systemImage: "rectangle.dashed")
                 }
                 Button {
                     coordinator.selectEntireMainDisplay()
                     dismiss()
                 } label: {
-                    Label("Весь главный экран", systemImage: "display")
+                    Label("Entire Main Display", systemImage: "display")
                 }
             }
 
             Divider()
 
             HStack {
-                Text("Или окно приложения").font(.headline)
+                Text("Or an App Window").font(.headline)
                 Spacer()
                 Button {
                     Task { await load() }
                 } label: {
                     Image(systemName: "arrow.clockwise")
                 }
-                .help("Обновить список окон")
+                .help("Refresh window list")
             }
 
             Group {
@@ -56,7 +56,7 @@ struct SourcePickerView: View {
                     List(windows, selection: $selection) { window in
                         VStack(alignment: .leading, spacing: 2) {
                             Text(window.appName).fontWeight(.medium)
-                            Text(window.title.isEmpty ? "Без названия" : window.title)
+                            Text(window.title.isEmpty ? String(localized: "Untitled") : window.title)
                                 .font(.callout)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
@@ -69,9 +69,9 @@ struct SourcePickerView: View {
 
             HStack {
                 Spacer()
-                Button("Отмена") { dismiss() }
+                Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button("Выбрать окно") {
+                Button("Choose Window") {
                     if let window = windows.first(where: { $0.id == selection }) {
                         coordinator.select(.window(window))
                     }

@@ -37,18 +37,18 @@ final class AppCoordinator {
     // MARK: Status
 
     var statusText: String {
-        if !state.hasScreenRecordingPermission { return "Ожидание разрешения на запись экрана" }
-        if state.translationAvailability == .downloading { return "Загрузка языковой модели…" }
-        if speech.qwen.state == .loading { return "Загрузка модели озвучки…" }
+        if !state.hasScreenRecordingPermission { return String(localized: "Waiting for screen recording permission") }
+        if state.translationAvailability == .downloading { return String(localized: "Downloading language model…") }
+        if speech.qwen.state == .loading { return String(localized: "Loading voice model…") }
         switch state.runState {
-        case .idle: return state.errorMessage == nil ? "Ожидание" : "Ошибка"
-        case .starting: return "Запуск захвата…"
-        case .paused: return "Пауза"
+        case .idle: return state.errorMessage == nil ? String(localized: "Idle") : String(localized: "Error")
+        case .starting: return String(localized: "Starting capture…")
+        case .paused: return String(localized: "Paused", comment: "Status: capture is paused")
         case .running:
-            if speech.isSpeaking { return "Озвучивание" }
-            if state.isTranslating { return "Перевод" }
-            if !state.recognizedLines.isEmpty { return "Распознавание" }
-            return "Захват активен"
+            if speech.isSpeaking { return String(localized: "Speaking") }
+            if state.isTranslating { return String(localized: "Translating") }
+            if !state.recognizedLines.isEmpty { return String(localized: "Recognizing") }
+            return String(localized: "Capture active")
         }
     }
 
@@ -155,7 +155,7 @@ final class AppCoordinator {
             return
         }
         guard let source = state.source else {
-            state.errorMessage = "Сначала выберите окно или область экрана."
+            state.errorMessage = String(localized: "Choose a window or screen region first.")
             return
         }
 
@@ -170,7 +170,7 @@ final class AppCoordinator {
             state.errorMessage = TranslationServiceError.unsupportedPair.errorDescription
             return
         default:
-            state.errorMessage = "Не удалось проверить доступность перевода."
+            state.errorMessage = String(localized: "Couldn’t check translation availability.")
             return
         }
 
@@ -247,7 +247,7 @@ final class AppCoordinator {
         guard settings.speechEngine == .qwen, speech.qwen.modelStore.isInstalled else { return }
         await speech.qwen.prepare(voiceSeed: settings.qwenVoiceSeed)
         if case .failed(let message) = speech.qwen.state {
-            state.errorMessage = "Голос Qwen3-TTS недоступен: \(message) Используется системный голос."
+            state.errorMessage = String(localized: "Qwen3-TTS voice unavailable: \(message) Using the system voice.")
         }
     }
 
@@ -330,7 +330,8 @@ extension AppCoordinator: PipelineDelegate {
         case .captureStopped(let message):
             Task {
                 await stop()
-                state.errorMessage = "Захват остановлен системой" + (message.map { ": \($0)" } ?? ".")
+                state.errorMessage = message.map { String(localized: "Capture stopped by the system: \($0)") }
+                    ?? String(localized: "Capture stopped by the system.")
             }
         }
     }

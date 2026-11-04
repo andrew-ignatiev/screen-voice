@@ -63,6 +63,7 @@ final class SpeechService {
     @ObservationIgnored private let neural = QwenPhraseSpeaker()
     @ObservationIgnored private var queue = SpeechQueue(capacity: 3, maxAge: 10)
     @ObservationIgnored private var preferredEngine: SpeechEngineKind = .system
+    @ObservationIgnored private var neuralVoice: NeuralVoice = .defaultMale
     /// Phrase being spoken and the engine speaking it. Completions for any other phrase are ignored.
     @ObservationIgnored private var current: (id: Int, engine: SpeechEngineKind)?
     @ObservationIgnored private var lastPhraseID = 0
@@ -81,6 +82,7 @@ final class SpeechService {
 
     func apply(_ settings: AppSettings) {
         preferredEngine = settings.speechEngine
+        neuralVoice = settings.neuralVoice
         let rate = min(max(settings.speechRate, AVSpeechUtteranceMinimumSpeechRate), AVSpeechUtteranceMaximumSpeechRate)
         let volume = min(max(settings.speechVolume, 0), 1)
         system.voiceIdentifier = settings.voiceIdentifier
@@ -159,7 +161,7 @@ final class SpeechService {
 
         if preferredEngine == .qwen, let synthesizer = qwen.readySynthesizer {
             current = (id, .qwen)
-            neural.speak(item.text, synthesizer: synthesizer, sampleRate: qwen.sampleRate) { [weak self] result in
+            neural.speak(item.text, voice: neuralVoice, synthesizer: synthesizer, sampleRate: qwen.sampleRate) { [weak self] result in
                 guard let self else { return }
                 if case .failure(let error) = result {
                     self.neuralPhraseFailed(id, text: item.text, error: error)

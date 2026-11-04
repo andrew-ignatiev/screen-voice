@@ -33,13 +33,7 @@ struct SettingsView: View {
                 }
                 if store.settings.speechEngine == .qwen {
                     NeuralModelRow()
-                    LabeledContent("Qwen voice") {
-                        HStack {
-                            Text("Variant \(store.settings.qwenVoiceSeed)")
-                                .monospacedDigit()
-                            Button("Another voice") { coordinator.nextNeuralVoice() }
-                        }
-                    }
+                    NeuralVoiceSettings()
                     Text("Until the voice is loaded, or if it fails, phrases are spoken with the system voice below.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -68,8 +62,10 @@ struct SettingsView: View {
                     value: $store.settings.maxQueuedPhrases,
                     in: AppSettings.queueRange
                 )
-                Button("Preview") { coordinator.previewVoice() }
-                    .disabled(isActive)
+                if store.settings.speechEngine != .qwen {
+                    Button("Preview") { coordinator.previewVoice() }
+                        .disabled(isActive)
+                }
             }
 
             Section("Recognition") {

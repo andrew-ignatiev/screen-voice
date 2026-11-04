@@ -79,8 +79,10 @@ struct AppSettings: Codable, Equatable, Sendable {
 
     var sourceLanguage: SourceLanguage = .english
     var speechEngine: SpeechEngineKind = .system
-    /// Seed of the generated placeholder Qwen voice. Changing it produces a different voice.
-    var qwenVoiceSeed: UInt64 = 1
+    /// The Qwen3-TTS voice: gender, style description and seed.
+    var neuralVoice: NeuralVoice = .defaultMale
+    /// Voices saved by the user. Built-in presets are not stored.
+    var voicePresets: [VoicePreset] = []
     /// Identifier of the chosen ru-RU voice. `nil` means "best installed Russian voice".
     var voiceIdentifier: String?
     /// AVSpeechUtterance rate, between AVSpeechUtteranceMinimumSpeechRate and Maximum.
@@ -105,7 +107,8 @@ extension AppSettings {
         let defaults = AppSettings()
         sourceLanguage = (try? container.decodeIfPresent(SourceLanguage.self, forKey: .sourceLanguage)) ?? defaults.sourceLanguage
         speechEngine = (try? container.decodeIfPresent(SpeechEngineKind.self, forKey: .speechEngine)) ?? defaults.speechEngine
-        qwenVoiceSeed = (try? container.decodeIfPresent(UInt64.self, forKey: .qwenVoiceSeed)) ?? defaults.qwenVoiceSeed
+        neuralVoice = (try? container.decodeIfPresent(NeuralVoice.self, forKey: .neuralVoice)) ?? defaults.neuralVoice
+        voicePresets = (try? container.decodeIfPresent([VoicePreset].self, forKey: .voicePresets)) ?? defaults.voicePresets
         voiceIdentifier = try? container.decodeIfPresent(String.self, forKey: .voiceIdentifier)
         speechRate = (try? container.decodeIfPresent(Float.self, forKey: .speechRate)) ?? defaults.speechRate
         speechVolume = (try? container.decodeIfPresent(Float.self, forKey: .speechVolume)) ?? defaults.speechVolume
@@ -115,5 +118,41 @@ extension AppSettings {
         maxQueuedPhrases = (try? container.decodeIfPresent(Int.self, forKey: .maxQueuedPhrases)) ?? defaults.maxQueuedPhrases
         showOverlay = (try? container.decodeIfPresent(Bool.self, forKey: .showOverlay)) ?? defaults.showOverlay
         skipSpeakerLabels = (try? container.decodeIfPresent(Bool.self, forKey: .skipSpeakerLabels)) ?? defaults.skipSpeakerLabels
+    }
+}
+
+// MARK: Voice presets
+
+extension AppSettings {
+    /// Built-in presets first, then the user's.
+    var allVoicePresets: [VoicePreset] { VoicePreset.builtIn + voicePresets }
+
+    /// The preset matching the current voice exactly, if any.
+    var selectedVoicePreset: VoicePreset? {
+        allVoicePresets.first { $0.voice == neuralVoice }
+    }
+
+    /// Saves the current voice. A user preset with the same name is overwritten.
+    @discardableResult
+    mutating func saveVoicePreset(named rawName: String) -> VoicePreset? {
+        let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return nil }
+        if let index = voicePresets.firstIndex(where: { $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame }) {
+            voicePresets[index].voice = neuralVoice
+            return voicePresets[index]
+        }
+        let preset = VoicePreset(id: UUID(), name: name, voice: neuralVoice)
+        voicePresets.append(preset)
+        return preset
+    }
+
+    mutating func deleteVoicePreset(id: UUID) {
+        voicePresets.removeAll { $0.id == id }
+    }
+
+    mutating func applyVoicePreset(id: UUID) {
+        if let preset = allVoicePresets.first(where: { $0.id == id }) {
+            neuralVoice = preset.voice
+        }
     }
 }

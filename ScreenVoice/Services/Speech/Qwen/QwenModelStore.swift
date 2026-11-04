@@ -21,21 +21,22 @@ struct QwenModelSpec: Sendable {
         URL(string: "https://huggingface.co/\(repository)/resolve/\(revision)/\(file.path)")!
     }
 
-    /// Qwen3-TTS 0.6B Base, 8-bit. Same revision Say It ships; checked for Russian (0% WER on the subtitle test set).
-    static let base8bit = QwenModelSpec(
-        repository: "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-8bit",
-        revision: "50f45ef0047cde7e84c2ef04326acb8ada2436a7",
-        directoryName: "Qwen3-TTS-12Hz-0.6B-Base-8bit",
+    /// Qwen3-TTS 1.7B VoiceDesign, 8-bit: builds a voice from a text description. Checked for Russian
+    /// (correct transcripts with Apple's recognizer, ~0.15 s to first audio, ~3.9 GB peak while speaking).
+    static let voiceDesign8bit = QwenModelSpec(
+        repository: "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-8bit",
+        revision: "f90d617701d9f7f4ca499291e0b57f2b3c2fd2ee",
+        directoryName: "Qwen3-TTS-12Hz-1.7B-VoiceDesign-8bit",
         files: [
-            File(path: "config.json", size: 5522, sha256: "b404fb6f99dac6f7a81f3a03af5675b131ecf9936ac75a7c9d75e54044600044"),
+            File(path: "config.json", size: 5_437, sha256: "b91c47798e77e259e6b86987e48d7a5eca8e703205e00afb63fe08ec5251f983"),
             File(path: "generation_config.json", size: 245, sha256: "f1b90b4513f3b34c62851049e2492d7b4c5940daf1276f89c82b8ef04127f3aa"),
             File(path: "merges.txt", size: 1_671_839, sha256: "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3"),
-            File(path: "model.safetensors", size: 1_304_461_214, sha256: "9488e7005cc0cf44f8804eb543668d0763bb1c649ce6f1eddc663519524b3182"),
-            File(path: "model.safetensors.index.json", size: 77731, sha256: "7829f1cc24f5cbd7d7a3ba888bb08c7cf52d82ba79a4f0f3756d41f8bf5e52b4"),
+            File(path: "model.safetensors", size: 2_393_308_931, sha256: "1a84179d87c972353ccdd9b48f3c4422509b3d1b11030d32358312fb0f3800d7"),
+            File(path: "model.safetensors.index.json", size: 71_786, sha256: "2551ed02dc288b90cd6b7ec98652433f08ef2ae98fb3eda5248a4b9e5b47d08b"),
             File(path: "preprocessor_config.json", size: 127, sha256: "efdde1022ea9d76928bf7a9cd53139138f5ba2e466e837f08f6105ab1af1c119"),
-            File(path: "tokenizer_config.json", size: 7344, sha256: "dc3c31c3bdaedd5016382bb3cbe07323026775ad51f5a4fb564505992ae4a670"),
+            File(path: "tokenizer_config.json", size: 7_344, sha256: "dc3c31c3bdaedd5016382bb3cbe07323026775ad51f5a4fb564505992ae4a670"),
             File(path: "vocab.json", size: 2_776_833, sha256: "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"),
-            File(path: "speech_tokenizer/config.json", size: 2336, sha256: "ee65bb901c876664ab8707c487157aa1a6ee57c65969b28fb5ec9dc211e68167"),
+            File(path: "speech_tokenizer/config.json", size: 2_336, sha256: "ee65bb901c876664ab8707c487157aa1a6ee57c65969b28fb5ec9dc211e68167"),
             File(path: "speech_tokenizer/configuration.json", size: 76, sha256: "6bc26d64eb5024b4d1dab5a52371958b429256d6c9d59787f1f5294a54e0cebd"),
             File(path: "speech_tokenizer/model.safetensors", size: 682_293_092, sha256: "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"),
             File(path: "speech_tokenizer/preprocessor_config.json", size: 234, sha256: "fcb3805e597e786d4067706e602f6688524640f8d3396790e2e09b5942fcbdfb"),
@@ -76,14 +77,28 @@ final class QwenModelStore {
     @ObservationIgnored private var downloadTask: Task<Void, Never>?
     @ObservationIgnored private let root: URL
 
-    init(spec: QwenModelSpec = .base8bit, root: URL = QwenModelStore.defaultRoot) {
+    init(spec: QwenModelSpec = .voiceDesign8bit, root: URL = QwenModelStore.defaultRoot) {
         self.spec = spec
         self.root = root
+        if root == Self.defaultRoot {
+            Self.removeObsoleteFiles(root: root)
+        }
         state = Self.isComplete(spec: spec, at: modelDirectory) ? .installed : .notInstalled
     }
 
     nonisolated static var defaultRoot: URL {
         URL.applicationSupportDirectory.appending(path: "ScreenVoice/Models", directoryHint: .isDirectory)
+    }
+
+    /// Earlier builds used Qwen3-TTS 0.6B Base plus cached reference voices (~2 GB). Nothing reads them any more.
+    nonisolated static let obsoleteModelDirectories = ["Qwen3-TTS-12Hz-0.6B-Base-8bit", "Qwen3-TTS-12Hz-0.6B-Base-8bit.partial"]
+
+    nonisolated static func removeObsoleteFiles(root: URL) {
+        let fm = FileManager.default
+        for name in obsoleteModelDirectories {
+            try? fm.removeItem(at: root.appending(path: name, directoryHint: .isDirectory))
+        }
+        try? fm.removeItem(at: root.deletingLastPathComponent().appending(path: "Voices", directoryHint: .isDirectory))
     }
 
     var modelDirectory: URL { root.appending(path: spec.directoryName, directoryHint: .isDirectory) }

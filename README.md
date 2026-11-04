@@ -30,7 +30,8 @@ Typical use: a film, stream, or game with English subtitles, and you want to *he
 - **Fully local:** OCR (Vision), translation (Apple Translation) and speech run on the device. No frames or text are saved or sent anywhere.
 - **Two voices:**
   - **System voice:** any installed ru-RU voice (Milena, Yuri, …) via `AVSpeechSynthesizer`.
-  - **Qwen3-TTS:** an on-device neural voice via [MLX](https://github.com/ml-explore/mlx-swift). It streams audio and starts speaking about 0.1 s after a line is ready (M5 Pro, Release build), and falls back to the system voice automatically.
+  - **Qwen3-TTS VoiceDesign:** an on-device neural voice via [MLX](https://github.com/ml-explore/mlx-swift), built from a description you write (gender, timbre, manner). It streams audio, starts speaking about 0.15 s after a line is ready (M5 Pro, Release build), and falls back to the system voice automatically.
+- **Voice presets:** save a voice you like (gender, style, variant) and switch back to it later. Two narrator presets, male and female, are built in.
 - **Smart de-duplication:** each line is spoken once. OCR jitter, flicker, multi-line subtitles and rolling captions don't cause repeats.
 - **Stays in sync:** the speech queue is bounded and lines that waited too long are dropped, so the voice doesn't fall behind the video.
 - **Speaker labels:** "Dutch: Let's go" can be spoken as just "Let's go"; the screen keeps the full line.
@@ -46,7 +47,7 @@ Typical use: a film, stream, or game with English subtitles, and you want to *he
 | Metal Toolchain | Required to build MLX: `xcodebuild -downloadComponent MetalToolchain` |
 | Russian system voice | e.g. Milena or Yuri. Needed for the system engine and as the fallback for Qwen |
 | Apple Translation model | For the chosen language pair; the app offers to download it |
-| Qwen3-TTS (optional) | ~1.9 GB download, ~3 GB RAM while running |
+| Qwen3-TTS (optional) | ~3.1 GB download, ~4 GB RAM while running |
 
 ## Install and build
 
@@ -86,7 +87,7 @@ tccutil reset ScreenCapture app.screenvoice.ScreenVoice
 1. On first launch, grant **Screen & System Audio Recording** (System Settings → Privacy & Security). macOS may ask you to relaunch the app.
 2. Click **Choose Region or Window…**. Selecting only the subtitle strip gives the best speed and accuracy.
 3. If a language-model warning appears, click **Download Model** and confirm. This is Apple Translation's model for the language pair.
-4. Optional: choose the neural voice in **Settings → Speech → Engine → Qwen3-TTS (neural)** and click **Download**, about 1.9 GB.
+4. Optional: choose the neural voice in **Settings → Speech → Engine → Qwen3-TTS (neural)** and click **Download**, about 3.1 GB. Then pick a voice preset or describe your own and click **Listen**.
 5. Click **Start**. Translations appear in the floating panel and are spoken.
 6. **Pause** pauses recognition and speech; **Stop** stops capture and unloads the neural model. **Skip Line** and **Clear Queue** control the speech queue.
 
@@ -108,14 +109,18 @@ Open with **ScreenVoice → Settings…** (⌘,) or from the menu-bar icon. Sett
 | Setting | Values | Default | Notes |
 |---|---|---|---|
 | Engine | System voice / Qwen3-TTS (neural) | System voice | Qwen falls back to the system voice while the model is missing, loading, or failing |
-| Model *(Qwen)* | Download / progress / Delete | – | 1.9 GB, verified by SHA-256 |
-| Qwen voice *(Qwen)* | Variant N + **Another voice** | Variant 1 | Each variant is a different generated voice; see [Placeholder voice](#placeholder-voice) |
+| Model *(Qwen)* | Download / progress / Delete | – | 3.1 GB, verified by SHA-256 |
+| Voice preset *(Qwen)* | Narrator, male / Narrator, female / your saved presets | Narrator, male | Shows **Custom (not saved)** after you change the voice; see [Voices and presets](#voices-and-presets) |
+| Gender *(Qwen)* | Male / Female | Male | An unedited default style switches with the gender; an edited style is kept |
+| Style *(Qwen)* | Free text, in English | Audiobook narrator description | Timbre, age, accent, manner. **Reset Style** restores the default |
+| Voice variant *(Qwen)* | Variant N + **Try Another** | 6 (male), 2 (female) | A different voice that fits the same description |
+| Listen / Save as Preset… / Delete Preset *(Qwen)* | Buttons | – | Saved presets keep gender, style and variant; a preset with the same name is replaced |
 | Voice / Fallback voice | Best installed Russian voice, or a specific ru-RU voice | Best installed | Used by the system engine, and as the fallback for Qwen |
 | Speed | Slider | Normal | System: `AVSpeechUtterance` rate. Qwen: 0.5×–2× time-stretch, pitch preserved |
 | Volume | 0–100 % | 100 % | Speech volume only; the video's volume is not changed |
 | Don’t speak the name before a colon | On / Off | On | Doesn't speak speaker labels such as "Dutch:" |
 | Max queued phrases | 1–10 | 3 | When full, the oldest waiting phrase is dropped |
-| Preview | Button | – | Speaks a sample phrase with the current engine |
+| Preview *(system voice)* | Button | – | Speaks a sample phrase |
 
 ### Recognition
 
@@ -207,12 +212,13 @@ sequenceDiagram
     participant P as QwenPhraseSpeaker
     participant Y as SystemPhraseSpeaker
 
-    C->>Q: Start → prepare(voiceSeed)
-    Q->>N: load model + voice conditioning
+    C->>Q: Start → prepare()
+    Q->>N: load model + warm-up phrase
     C->>S: enqueue(translated phrase)
     alt Qwen selected and ready
-        S->>P: speak(text)
-        P->>N: synthesize(text)
+        S->>P: speak(text, voice)
+        P->>N: synthesize(text, voice)
+        N->>N: seed MLX with voice.seed
         loop every ~0.5 s of audio
             N-->>P: PCM chunk
             P->>P: schedule on AVAudioPlayerNode
@@ -222,7 +228,7 @@ sequenceDiagram
         S->>Y: speak(text) with the ru-RU system voice
         Y-->>S: finished
     end
-    C->>Q: Stop → unload (frees ~3 GB)
+    C->>Q: Stop → unload (frees ~4 GB)
 ```
 
 ### Run states
@@ -245,52 +251,60 @@ The project builds with Swift 6 and `SWIFT_STRICT_CONCURRENCY = complete`.
 
 - UI state, `AppCoordinator`, `SpeechService` and the audio players live on the **main actor**.
 - Recognition and translation run as two background tasks in `PipelineCoordinator`. Their options sit behind a `Mutex`, so settings apply on the next tick without a restart.
-- `QwenSynthesizer` is an **actor** with an internal FIFO gate, so only one MLX operation (load, voice preparation, generation, unload) runs at a time.
+- `QwenSynthesizer` is an **actor** with an internal FIFO gate, so only one MLX operation (load, generation, unload) runs at a time. That also keeps each phrase's seed from being disturbed by another generation.
 - `QwenVoiceController` chains loads and unloads in call order, so a quick Stop → Start can't interleave them.
 
 ## Neural voice (Qwen3-TTS)
 
 | | |
 |---|---|
-| Model | [`mlx-community/Qwen3-TTS-12Hz-0.6B-Base-8bit`](https://huggingface.co/mlx-community/Qwen3-TTS-12Hz-0.6B-Base-8bit), revision `50f45ef` (pinned) |
+| Model | [`mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-8bit`](https://huggingface.co/mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-8bit), revision `f90d617` (pinned) |
 | Runtime | [mlx-audio-swift](https://github.com/Blaizzy/mlx-audio-swift) `624fd54` on [mlx-swift](https://github.com/ml-explore/mlx-swift) `ac4ae9a`, pinned before MLX 0.32.2, which slows Metal token generation by ~50% |
 | Storage | `~/Library/Containers/app.screenvoice.ScreenVoice/Data/Library/Application Support/ScreenVoice/Models/` |
-| Download | 12 files, 1.99 GB. Each file's size and SHA-256 are checked before the folder is moved into place. Resumes per file |
-| Memory | ~3 GB peak while loaded. Loaded on Start; unloaded on Stop and 2 min after a preview |
+| Download | 12 files, 3.08 GB. Each file's size and SHA-256 are checked before the folder is moved into place. Resumes per file. Files of the 0.6B model used by earlier builds are deleted automatically |
+| Memory | ~4 GB peak while speaking. Loaded on Start; unloaded on Stop and 2 min after a preview |
 
 ### Measured latency and quality
 
-Apple M5 Pro, 24 GB, Release build, 20 typical Russian subtitle lines, 0.5 s streaming chunks, standalone benchmark (no OCR or translation running):
+Apple M5 Pro, 24 GB, Release build, 0.5 s streaming chunks, standalone benchmark (no OCR or translation running):
 
-| Variant | First audio | Total per line (median / max) | Speed vs real time | Peak memory | Word error rate* |
-|---|---|---|---|---|---|
-| **8-bit (used)** | **0.12 s** | 0.56 / 0.85 s | 4× faster | 2.95 GB | **0 %** |
-| 4-bit | 0.10 s | 0.45 / 0.64 s | 4.8× faster | 2.67 GB | 0.9 % |
+| | 1.7B VoiceDesign 8-bit (used) | 0.6B Base 8-bit (earlier builds) |
+|---|---|---|
+| First audio | **0.15 s** | 0.12 s |
+| Speed vs real time | ~3.5× faster | 4× faster |
+| Peak memory while speaking | 3.9 GB | 2.95 GB |
+| Intelligibility* | correct transcripts | 0 % word errors |
+| Same voice on every phrase | **yes** (fixed seed) | no: pitch varied 111–154 Hz on the same phrase |
 
 \* The output was transcribed with Apple's on-device ru-RU `DictationTranscriber` and compared with the input text.
 
-One-time startup: model load ≈ 1.3 s, voice preparation ≈ 1.9 s.
+One-time startup: model load ≈ 1 s plus a short warm-up phrase, so the first subtitle is as fast as the rest (without it the first phrase took 2.5 s to start).
 
 Not used: the 808 MB "vocab-pruned" Qwen3-TTS builds from AtomGradient. Their pruning removes every Cyrillic token, so they can't speak Russian.
 
-### Placeholder voice
+### Voices and presets
 
-The Base model clones whatever voice it is given as a reference. Until a designed voice ships, ScreenVoice makes one:
+VoiceDesign builds a voice from a text description. ScreenVoice sends the gender line plus your style as the model's instruction, and seeds the random generator with the voice variant before every phrase:
 
 ```mermaid
 flowchart LR
-    S[Voice variant N] -->|seed MLX RNG| G["Qwen3 Base speaks a fixed<br/>Russian sentence in a random voice"]
-    G --> W[("qwen-voice-N.wav<br/>cached")]
-    W --> R["prepareReferenceConditioning<br/>(once per load)"]
-    R --> T["Every phrase is generated<br/>in that same voice"]
+    G["Gender<br/>Native Russian male speaker."] --> I[Instruction]
+    S["Style<br/>Deep, warm, resonant baritone. …"] --> I
+    I --> M["Qwen3-TTS VoiceDesign<br/>generateStream"]
+    V["Variant N"] -->|MLXRandom.seed| M
+    M --> A["Audio in the same voice<br/>for every phrase"]
+    P[("Preset<br/>name + gender + style + variant")] -.->|select| G & S & V
 ```
 
-The same variant number always gives the same voice. **Another voice** moves to the next variant.
+- **Why the seed matters:** without it the model invents a new voice for every phrase, even with the same description (pitch ranged 75–212 Hz in a test). With a fixed seed the same text always gives identical audio, and the voice stays consistent across phrases.
+- **Variants differ in steadiness.** In a scan of seeds 1–8, some kept an even pitch across different sentences and others drifted. The built-in presets use the steadiest: male variant 6 (~100 Hz, a baritone) and female variant 2 (~230 Hz). If a variant you like drifts on some lines, try the next one.
+- **Style text** works best in English. The default is an audiobook-narrator description; the male and female defaults differ only in the timbre line.
+- **Presets** are stored with the other settings in `UserDefaults`. Built-in presets can't be changed or deleted; picking one and editing anything gives a custom voice you can save under a new name.
 
 ### Behaviour details
 
 - **Streaming:** audio is scheduled on `AVAudioPlayerNode` as 0.5 s chunks arrive, so playback starts before the line finishes generating.
-- **Skip / Stop:** playback stops at once. A generation already running finishes in the background and its audio is discarded. It runs ~4× faster than real time, so it has usually finished anyway. This keeps the model's shared decoder state from being corrupted.
+- **Skip / Stop:** playback stops at once. A generation already running finishes in the background and its audio is discarded. It runs ~3.5× faster than real time, so it has usually finished anyway. This keeps the model's shared decoder state from being corrupted.
 - **Speed:** Qwen3 has no speaking-rate control, so `AVAudioUnitTimePitch` stretches playback (bypassed at 1×).
 - **Output device change:** the current phrase ends and the audio engine restarts on the next phrase.
 
@@ -303,7 +317,7 @@ ScreenVoice/
 │   ├── AppCoordinator.swift          User actions, permissions, run state, Qwen lifecycle
 │   ├── AppState.swift                Observable UI state
 │   └── SettingsStore.swift           UserDefaults persistence
-├── Models/                           AppSettings, CaptureSource, RecognizedLine, TranslationResult
+├── Models/                           AppSettings, NeuralVoice + VoicePreset, CaptureSource, RecognizedLine, TranslationResult
 ├── Services/
 │   ├── Capture/                      CaptureService (SCStream), RegionSelector
 │   ├── OCR/                          OCRService (Vision), TextChangeDetector
@@ -315,7 +329,7 @@ ScreenVoice/
 │       ├── SpeakerLabelFilter.swift  "Name:" stripping
 │       └── Qwen/
 │           ├── QwenModelStore.swift      Pinned download + SHA-256 verification
-│           ├── QwenSynthesizer.swift     MLX model actor, voice, streaming generation
+│           ├── QwenSynthesizer.swift     MLX model actor, seeded VoiceDesign streaming generation
 │           ├── QwenVoiceController.swift Ordered load/unload, state for the UI
 │           └── QwenPhraseSpeaker.swift   AVAudioEngine streaming playback
 ├── Views/                            Main window, source picker, settings, overlay, menu bar
@@ -334,7 +348,7 @@ The interface is written in English (the development language) and translated wi
 | Language | Status |
 |---|---|
 | English | Source language |
-| Russian | Complete (123 of 123 strings) |
+| Russian | Complete (all translatable strings) |
 
 How strings are handled in code:
 
@@ -342,7 +356,7 @@ How strings are handled in code:
 - Strings built outside views (status text, errors, enum names) use `String(localized:)`. A `comment:` disambiguates short words, e.g. "Paused" as a status.
 - Interpolated values become format specifiers (`"In queue: %lld"`); translations use positional arguments (`%1$@`, `%2$@`) where word order may change.
 - Language names come from `Locale.localizedString(forLanguageCode:)`, so the system translates them.
-- Text the app *speaks* (the preview phrase, the Qwen reference sentence) is content in the target language and is intentionally not localized.
+- Text the app *speaks* (the preview phrase) is content in the target language, and the voice description is model input in English; neither is localized.
 
 To add a language: open `Localizable.xcstrings` in Xcode, click **+** to add the language, translate every string, and add the language code to `knownRegions` (Xcode does this when you add it in Project → Info → Localizations). Building in Xcode adds new strings to the catalog automatically.
 
@@ -360,7 +374,7 @@ xcodebuild -project ScreenVoice.xcodeproj -scheme ScreenVoice -destination 'plat
 | `PipelineTests` | Bounded speech queue, stale-phrase skipping, settings → pipeline, settings compatibility, region geometry |
 | `SpeakerLabelFilterTests` | Speaker-label stripping rules |
 | `LocalizationTests` | English development language, Russian translations present, format strings with arguments, system language names, spoken text stays Russian |
-| `NeuralVoiceTests` | Engine settings, speed mapping, model install checks, plus **end-to-end Russian synthesis** and serialized generation (these two run only when the model is installed in the app container) |
+| `NeuralVoiceTests` | Voice description, gender switching, presets (save, replace, delete, built-ins), settings compatibility, speed mapping, model install checks, removal of old model files, plus **end-to-end**: Russian synthesis speed, identical audio for the same voice, serialized generation (these run only when the model is installed in the app container) |
 
 ## Privacy
 
@@ -374,7 +388,8 @@ xcodebuild -project ScreenVoice.xcodeproj -scheme ScreenVoice -destination 'plat
 - Protected content (e.g. DRM video in Safari) may be captured as a black frame.
 - The app doesn't lower the video's volume; speech plays on top.
 - Latency depends on region size, analysis rate and Mac model. Qwen latency under full OCR and translation load hasn't been measured yet.
-- The Qwen voice is a generated placeholder; a designed Russian voice is planned.
+- Some voice variants drift in pitch on some sentences; the built-in presets use the steadiest ones found.
+- Pronunciation of numbers, dates and abbreviations hasn't been tested systematically.
 - Only English and Russian interface translations so far.
 
 ## Credits and licenses

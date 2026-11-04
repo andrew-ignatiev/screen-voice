@@ -238,14 +238,14 @@ final class AppCoordinator {
         }
     }
 
-    /// Switches to a different generated placeholder voice.
-    func nextNeuralVoice() {
-        settingsStore.settings.qwenVoiceSeed &+= 1
+    /// Keeps the description and picks another voice that matches it.
+    func nextNeuralVoiceVariant() {
+        settingsStore.settings.neuralVoice.seed &+= 1
     }
 
     private func prepareNeuralVoice() async {
         guard settings.speechEngine == .qwen, speech.qwen.modelStore.isInstalled else { return }
-        await speech.qwen.prepare(voiceSeed: settings.qwenVoiceSeed)
+        await speech.qwen.prepare()
         if case .failed(let message) = speech.qwen.state {
             state.errorMessage = String(localized: "Qwen3-TTS voice unavailable: \(message) Using the system voice.")
         }
@@ -282,12 +282,13 @@ final class AppCoordinator {
     private func settingsDidChange(from old: AppSettings, to new: AppSettings) {
         speech.apply(new)
         pipeline.apply(new, previous: old)
-        if old.speechEngine != new.speechEngine || old.qwenVoiceSeed != new.qwenVoiceSeed {
+        // Voice changes need no reload: each phrase carries its voice.
+        if old.speechEngine != new.speechEngine {
             if new.speechEngine == .system {
                 idleUnloadTask?.cancel()
                 Task { await speech.qwen.unload() }
             } else if state.isCaptureActive || speech.qwen.state != .unloaded {
-                // Phrases keep using the system voice until the new voice is ready.
+                // Phrases keep using the system voice until the model is loaded.
                 Task { await prepareNeuralVoice() }
             }
         }

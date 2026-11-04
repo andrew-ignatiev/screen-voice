@@ -35,16 +35,6 @@
         }
       }
     },
-    "Another voice": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Другой голос"
-          }
-        }
-      }
-    },
     "Apple Translation on this Mac doesn’t support the selected language pair.": {
       "localizations": {
         "ru": {
@@ -185,12 +175,52 @@
         }
       }
     },
+    "Custom (not saved)": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свой (не сохранён)"
+          }
+        }
+      }
+    },
     "Delete": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Удалить"
+          }
+        }
+      }
+    },
+    "Delete Preset": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить пресет"
+          }
+        }
+      }
+    },
+    "Delete the “%@” preset?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить пресет «%@»?"
+          }
+        }
+      }
+    },
+    "Describe the voice in English: timbre, age, accent, manner. The male or female line is added for you.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Опишите голос по-английски: тембр, возраст, акцент, манеру. Строка о мужском или женском голосе добавляется автоматически."
           }
         }
       }
@@ -251,6 +281,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Выделите область с субтитрами. Esc — отмена."
+          }
+        }
+      }
+    },
+    "Each variant is a different voice that fits the description. The same variant always sounds the same.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Каждый вариант — другой голос под то же описание. Один и тот же вариант всегда звучит одинаково."
           }
         }
       }
@@ -316,6 +356,17 @@
         }
       }
     },
+    "Female": {
+      "comment": "Voice gender",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Женский"
+          }
+        }
+      }
+    },
     "Floating panel": {
       "localizations": {
         "ru": {
@@ -332,6 +383,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Лучше всего выделить только полосу с субтитрами: так распознавание быстрее и точнее."
+          }
+        }
+      }
+    },
+    "Gender": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пол"
           }
         }
       }
@@ -417,6 +478,16 @@
         }
       }
     },
+    "Listen": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прослушать"
+          }
+        }
+      }
+    },
     "Loading into memory…": {
       "localizations": {
         "ru": {
@@ -433,6 +504,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Загрузка модели озвучки…"
+          }
+        }
+      }
+    },
+    "Male": {
+      "comment": "Voice gender",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мужской"
           }
         }
       }
@@ -463,6 +545,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Модель"
+          }
+        }
+      }
+    },
+    "Name": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Название"
+          }
+        }
+      }
+    },
+    "Narrator, female": {
+      "comment": "Built-in voice preset",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Диктор, женский"
+          }
+        }
+      }
+    },
+    "Narrator, male": {
+      "comment": "Built-in voice preset",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Диктор, мужской"
           }
         }
       }
@@ -628,16 +742,6 @@
         }
       }
     },
-    "Qwen voice": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Голос Qwen"
-          }
-        }
-      }
-    },
     "Qwen3-TTS (neural)": {
       "localizations": {
         "ru": {
@@ -749,6 +853,16 @@
         }
       }
     },
+    "Reset Style": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сбросить стиль"
+          }
+        }
+      }
+    },
     "Resume": {
       "localizations": {
         "ru": {
@@ -765,6 +879,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Повторить"
+          }
+        }
+      }
+    },
+    "Save": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить"
+          }
+        }
+      }
+    },
+    "Save Voice Preset": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить пресет голоса"
+          }
+        }
+      }
+    },
+    "Save as Preset…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить как пресет…"
+          }
+        }
+      }
+    },
+    "Saves the gender, style and variant. A preset with the same name is replaced.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохраняются пол, стиль и вариант. Пресет с таким же названием будет заменён."
           }
         }
       }
@@ -942,6 +1096,16 @@
         }
       }
     },
+    "Style": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Стиль"
+          }
+        }
+      }
+    },
     "System voice": {
       "localizations": {
         "ru": {
@@ -988,6 +1152,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Контрольная сумма %@ не совпадает."
+          }
+        }
+      }
+    },
+    "The current voice stays selected.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Текущий голос останется выбранным."
           }
         }
       }
@@ -1122,6 +1296,16 @@
         }
       }
     },
+    "Try Another": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Другой вариант"
+          }
+        }
+      }
+    },
     "Until the voice is loaded, or if it fails, phrases are spoken with the system voice below.": {
       "localizations": {
         "ru": {
@@ -1168,6 +1352,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Голос"
+          }
+        }
+      }
+    },
+    "Voice preset": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пресет голоса"
+          }
+        }
+      }
+    },
+    "Voice variant": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вариант голоса"
           }
         }
       }

@@ -51,7 +51,7 @@ final class QwenPhraseSpeaker {
         return r <= 0.5 ? 0.5 + r : 1 + (r - 0.5) * 2
     }
 
-    func speak(_ text: String, synthesizer: QwenSynthesizer, sampleRate: Double, completion: @escaping Completion) {
+    func speak(_ text: String, voice: NeuralVoice, synthesizer: QwenSynthesizer, sampleRate: Double, completion: @escaping Completion) {
         stop()
         phraseID += 1
         let id = phraseID
@@ -68,7 +68,7 @@ final class QwenPhraseSpeaker {
 
         feedTask = Task { [weak self] in
             do {
-                for try await samples in synthesizer.synthesize(text) {
+                for try await samples in synthesizer.synthesize(text, voice: voice) {
                     guard let self, id == self.phraseID else { return }
                     self.schedule(samples, id: id)
                 }

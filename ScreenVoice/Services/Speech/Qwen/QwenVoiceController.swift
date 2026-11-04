@@ -18,53 +18,41 @@ final class QwenVoiceController {
     private(set) var sampleRate: Double = 24_000
 
     @ObservationIgnored let synthesizer = QwenSynthesizer()
-    @ObservationIgnored private var loadedSeed: UInt64?
     @ObservationIgnored private var lastOperation: Task<Void, Never>?
-    @ObservationIgnored private let voiceDirectory: URL
 
-    init(
-        modelStore: QwenModelStore = QwenModelStore(),
-        voiceDirectory: URL = URL.applicationSupportDirectory.appending(path: "ScreenVoice/Voices", directoryHint: .isDirectory)
-    ) {
+    init(modelStore: QwenModelStore = QwenModelStore()) {
         self.modelStore = modelStore
-        self.voiceDirectory = voiceDirectory
     }
 
-    /// The synthesizer, only when the model and voice are loaded.
+    /// The synthesizer, only when the model is loaded.
     var readySynthesizer: QwenSynthesizer? { state == .ready ? synthesizer : nil }
 
-    /// Loads the model and the voice for `voiceSeed` if needed. Returns when ready or failed.
-    func prepare(voiceSeed: UInt64) async {
+    /// Loads the model if needed. Returns when ready or failed. Voices need no loading: each phrase
+    /// carries its own voice description and seed.
+    func prepare() async {
         await serialized { controller in
-            await controller.performPrepare(voiceSeed: voiceSeed)
+            await controller.performPrepare()
         }
     }
 
     func unload() async {
         await serialized { controller in
-            controller.loadedSeed = nil
             controller.state = .unloaded
             await controller.synthesizer.unload()
         }
     }
 
-    private func performPrepare(voiceSeed: UInt64) async {
+    private func performPrepare() async {
         guard modelStore.isInstalled else {
             state = .unloaded
             return
         }
-        if state == .ready, loadedSeed == voiceSeed { return }
+        if state == .ready { return }
         state = .loading
         do {
-            sampleRate = try await synthesizer.load(
-                modelDirectory: modelStore.modelDirectory,
-                voiceSeed: voiceSeed,
-                voiceDirectory: voiceDirectory
-            )
-            loadedSeed = voiceSeed
+            sampleRate = try await synthesizer.load(modelDirectory: modelStore.modelDirectory)
             state = .ready
         } catch {
-            loadedSeed = nil
             state = .failed(error.localizedDescription)
         }
     }

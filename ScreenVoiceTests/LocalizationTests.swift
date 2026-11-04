@@ -25,6 +25,8 @@ struct LocalizationTests {
         ("Speech", "Озвучка"),
         ("Qwen3-TTS (neural)", "Qwen3-TTS (нейросеть)"),
         ("Download Model", "Загрузить модель"),
+        ("Save as Preset…", "Сохранить как пресет…"),
+        ("Narrator, male", "Диктор, мужской"),
     ])
     func russianTranslationExists(key: String, expected: String) throws {
         #expect(try Self.russian(key) == expected)
@@ -51,6 +53,7 @@ struct LocalizationTests {
     @Test @MainActor func spokenTextStaysRussian() {
         // Content the app speaks is in the target language regardless of the interface language.
         #expect(SpeechService.previewText.contains("Привет"))
-        #expect(QwenSynthesizer.referenceText.contains("Добрый вечер"))
+        // The voice description is model input and stays English in every interface language.
+        #expect(NeuralVoice.defaultMale.instruct.hasPrefix("Native Russian male speaker."))
     }
 }

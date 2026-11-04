@@ -15,30 +15,29 @@ enum QwenSynthesizerError: LocalizedError {
     }
 }
 
-/// Owns the Qwen3-TTS model and the voice conditioning. Every MLX operation runs behind a gate, one at a time:
-/// the model and its streaming decoder state are not safe for concurrent use.
+/// Owns the Qwen3-TTS VoiceDesign model. Every MLX operation runs behind a gate, one at a time: the model and
+/// its streaming decoder state are not safe for concurrent use, and the seed is process-wide MLX state.
 ///
-/// A started generation always runs to completion, even if nobody listens any more. Generation is ~4× faster
+/// Each phrase is generated from the voice description with the voice's seed, so a voice sounds the same on
+/// every phrase and the same text always gives the same audio. Without the fixed seed the model invents a
+/// new voice for every phrase.
+///
+/// A started generation always runs to completion, even if nobody listens any more. Generation is ~3.5× faster
 /// than playback, so by the time a phrase is skipped it has usually finished anyway, and the next phrase never
 /// overlaps a half-cancelled one.
 actor QwenSynthesizer {
-    /// What the generated placeholder voice says. Also the reference transcript for voice conditioning.
-    /// Spoken content, not UI: always Russian, never localized.
-    static let referenceText = "Добрый вечер. Сегодня я расскажу вам короткую историю о старом маяке на берегу холодного моря."
     static let language = "russian"
-    /// Seconds of audio per streamed chunk. 0.5 s gives ~0.1 s to first audio on Apple silicon.
+    /// Seconds of audio per streamed chunk. 0.5 s gives ~0.15 s to first audio on Apple silicon.
     static let streamingInterval = 0.5
 
     private var model: Qwen3TTSModel?
     private var modelDirectory: URL?
-    private var conditioning: Qwen3TTSModel.Qwen3TTSReferenceConditioning?
-    private var voiceSeed: UInt64?
 
     private var isBusy = false
     private var waiters: [CheckedContinuation<Void, Never>] = []
 
-    /// Loads the model (if needed) and prepares the voice for `voiceSeed`. Returns the output sample rate.
-    func load(modelDirectory: URL, voiceSeed: UInt64, voiceDirectory: URL) async throws -> Double {
+    /// Loads the model if needed. Returns the output sample rate.
+    func load(modelDirectory: URL) async throws -> Double {
         await acquire()
         defer { release() }
 
@@ -46,21 +45,21 @@ actor QwenSynthesizer {
             dropModel()
             let loaded = try await TTS.loadModel(modelRepo: modelDirectory.path, modelType: "qwen3_tts")
             guard let qwen = loaded as? Qwen3TTSModel else { throw QwenSynthesizerError.unexpectedModel }
+            // The first generation compiles the GPU kernels (~2.5 s to first audio). Do it now, while the
+            // app shows "Loading voice model…", so the first subtitle starts as fast as the rest.
+            for try await _ in qwen.generateStream(
+                text: "Проверка.",
+                voice: NeuralVoice.defaultMale.instruct,
+                refAudio: nil,
+                refText: nil,
+                language: Self.language,
+                generationParameters: qwen.defaultGenerationParameters,
+                streamingInterval: Self.streamingInterval
+            ) {}
             model = qwen
             self.modelDirectory = modelDirectory
         }
         guard let model else { throw QwenSynthesizerError.notLoaded }
-
-        if conditioning == nil || self.voiceSeed != voiceSeed {
-            conditioning = nil
-            let reference = try await referenceAudio(model: model, seed: voiceSeed, directory: voiceDirectory)
-            conditioning = try model.prepareReferenceConditioning(
-                refAudio: reference,
-                refText: Self.referenceText,
-                language: Self.language
-            )
-            self.voiceSeed = voiceSeed
-        }
         return Double(model.sampleRate)
     }
 
@@ -70,24 +69,34 @@ actor QwenSynthesizer {
         dropModel()
     }
 
-    /// Streams 24 kHz mono samples for `text`. Stopping iteration does not stop generation; see the type comment.
-    nonisolated func synthesize(_ text: String) -> AsyncThrowingStream<[Float], Error> {
+    /// Streams 24 kHz mono samples for `text` in `voice`. Stopping iteration does not stop generation;
+    /// see the type comment.
+    nonisolated func synthesize(_ text: String, voice: NeuralVoice) -> AsyncThrowingStream<[Float], Error> {
         let (stream, continuation) = AsyncThrowingStream<[Float], Error>.makeStream()
-        Task { await self.generate(text, into: continuation) }
+        Task { await self.generate(text, voice: voice, into: continuation) }
         return stream
     }
 
-    private func generate(_ text: String, into continuation: AsyncThrowingStream<[Float], Error>.Continuation) async {
+    private func generate(
+        _ text: String,
+        voice: NeuralVoice,
+        into continuation: AsyncThrowingStream<[Float], Error>.Continuation
+    ) async {
         await acquire()
         defer { release() }
-        guard let model, let conditioning else {
+        guard let model else {
             continuation.finish(throwing: QwenSynthesizerError.notLoaded)
             return
         }
         do {
+            // Qwen3 ignores GenerateParameters.seed; seed MLX's global generator instead.
+            MLXRandom.seed(voice.seed)
             let events = model.generateStream(
                 text: text,
-                conditioning: conditioning,
+                voice: voice.instruct,
+                refAudio: nil,
+                refText: nil,
+                language: Self.language,
                 generationParameters: model.defaultGenerationParameters,
                 streamingInterval: Self.streamingInterval
             )
@@ -102,34 +111,9 @@ actor QwenSynthesizer {
         }
     }
 
-    /// The placeholder voice: Qwen3 Base speaking `referenceText` with a seeded random voice, cached on disk
-    /// so the same seed always gives the same voice.
-    private func referenceAudio(model: Qwen3TTSModel, seed: UInt64, directory: URL) async throws -> MLXArray {
-        let url = directory.appending(path: "qwen-voice-\(seed).wav")
-        if !FileManager.default.fileExists(atPath: url.path) {
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            // Qwen3 ignores GenerateParameters.seed; seed MLX's global generator instead.
-            MLXRandom.seed(seed)
-            let audio = try await model.generate(
-                text: Self.referenceText,
-                voice: nil,
-                refAudio: nil,
-                refText: nil,
-                language: Self.language,
-                generationParameters: model.defaultGenerationParameters
-            )
-            let samples = audio.asType(.float32).asArray(Float.self)
-            try AudioUtils.writeWavFile(samples: samples, sampleRate: model.sampleRate, fileURL: url)
-        }
-        let (_, reference) = try loadAudioArray(from: url, sampleRate: model.sampleRate)
-        return reference
-    }
-
     private func dropModel() {
         model = nil
         modelDirectory = nil
-        conditioning = nil
-        voiceSeed = nil
         Memory.clearCache()
     }
 

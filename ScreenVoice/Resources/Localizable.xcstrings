@@ -35,6 +35,16 @@
         }
       }
     },
+    "Another Text": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Другой текст"
+          }
+        }
+      }
+    },
     "Apple Translation on this Mac doesn’t support the selected language pair.": {
       "localizations": {
         "ru": {
@@ -55,12 +65,33 @@
         }
       }
     },
+    "Approximate length of the recording the voice is cloned from. Each length is a slightly different recording; listen to compare.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Примерная длина записи, с которой копируется голос. Для каждой длины своя запись; сравните на слух."
+          }
+        }
+      }
+    },
     "Best installed Russian voice": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Лучший установленный русский"
+          }
+        }
+      }
+    },
+    "Calm (0.7)": {
+      "comment": "Neural voice delivery",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Спокойная (0.7)"
           }
         }
       }
@@ -105,6 +136,26 @@
         }
       }
     },
+    "Catch up": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Догонять"
+          }
+        }
+      }
+    },
+    "Choose File…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбрать файл…"
+          }
+        }
+      }
+    },
     "Choose Region or Window…": {
       "localizations": {
         "ru": {
@@ -145,6 +196,16 @@
         }
       }
     },
+    "Clone a voice from a WAV or MP3 file: 8–15 seconds of one person speaking, without music.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копировать голос из файла WAV или MP3: 8–15 секунд речи одного человека без музыки."
+          }
+        }
+      }
+    },
     "Confirm the download in the system dialog. Translation starts working once it finishes.": {
       "localizations": {
         "ru": {
@@ -165,12 +226,52 @@
         }
       }
     },
+    "Couldn’t create the voice: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось создать голос: %@"
+          }
+        }
+      }
+    },
     "Couldn’t prepare translation": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Не удалось подготовить перевод"
+          }
+        }
+      }
+    },
+    "Couldn’t read the file: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось прочитать файл: %@"
+          }
+        }
+      }
+    },
+    "Couldn’t save the recording: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось сохранить запись: %@"
+          }
+        }
+      }
+    },
+    "Creating voice…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создаём голос…"
           }
         }
       }
@@ -211,6 +312,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Удалить пресет «%@»?"
+          }
+        }
+      }
+    },
+    "Delivery": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подача"
           }
         }
       }
@@ -261,6 +372,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Загрузить модель"
+          }
+        }
+      }
+    },
+    "Download the voice designer to create new voices.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Чтобы создавать новые голоса, загрузите конструктор голосов."
           }
         }
       }
@@ -356,6 +477,16 @@
         }
       }
     },
+    "Faster: %@×": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Быстрее: %@×"
+          }
+        }
+      }
+    },
     "Female": {
       "comment": "Voice gender",
       "localizations": {
@@ -427,6 +558,36 @@
         }
       }
     },
+    "If you say something different, edit the text to match exactly.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Если прочитали иначе, исправьте текст, чтобы он точно совпадал со сказанным."
+          }
+        }
+      }
+    },
+    "Import Voice Sample": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Импорт образца голоса"
+          }
+        }
+      }
+    },
+    "Import Voice Sample…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Импортировать образец голоса…"
+          }
+        }
+      }
+    },
     "In queue: %lld": {
       "localizations": {
         "ru": {
@@ -488,6 +649,17 @@
         }
       }
     },
+    "Lively (0.9)": {
+      "comment": "Neural voice delivery",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Живая (0.9)"
+          }
+        }
+      }
+    },
     "Loading into memory…": {
       "localizations": {
         "ru": {
@@ -519,12 +691,32 @@
         }
       }
     },
+    "Mark stress": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Расставлять ударения"
+          }
+        }
+      }
+    },
     "Max queued phrases: %lld": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Фраз в очереди не больше: %lld"
+          }
+        }
+      }
+    },
+    "Microphone access is off for ScreenVoice.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У ScreenVoice нет доступа к микрофону."
           }
         }
       }
@@ -581,12 +773,42 @@
         }
       }
     },
+    "New voice: Listen creates it first (10–20 seconds, once).": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый голос: «Прослушать» сначала создаст его (10–20 секунд, один раз)."
+          }
+        }
+      }
+    },
+    "New voice: download the voice designer to create it. Until then the built-in narrator speaks.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый голос: чтобы создать его, загрузите конструктор голосов. До тех пор говорит встроенный диктор."
+          }
+        }
+      }
+    },
     "No Russian voice installed": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Русский голос не установлен"
+          }
+        }
+      }
+    },
+    "No microphone found.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Микрофон не найден."
           }
         }
       }
@@ -601,12 +823,42 @@
         }
       }
     },
+    "No speech found in the file.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В файле не найдена речь."
+          }
+        }
+      }
+    },
+    "No words were recognized. Type the text of the sample.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Слова не распознаны. Введите текст образца."
+          }
+        }
+      }
+    },
     "Not selected": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Не выбран"
+          }
+        }
+      }
+    },
+    "Nothing was heard. Check the microphone and try again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ничего не слышно. Проверьте микрофон и попробуйте ещё раз."
           }
         }
       }
@@ -637,6 +889,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "OCR: %1$lld мс · строк: %2$lld"
+          }
+        }
+      }
+    },
+    "Open Microphone Settings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть настройки микрофона"
           }
         }
       }
@@ -691,6 +953,26 @@
         }
       }
     },
+    "Optional. Needed only to create a new voice from its description; it is loaded for a few seconds and then unloaded. The built-in narrators and voices already created work without it.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Необязательно. Нужен только чтобы создать новый голос по описанию: загружается на несколько секунд и выгружается. Встроенные дикторы и уже созданные голоса работают без него."
+          }
+        }
+      }
+    },
+    "Optional. RUAccent marks the stressed vowel of each word and a stress LoRA makes the voice follow the marks, so words like замок or мука are stressed by their meaning. RUAccent still guesses wrong now and then. Speech gets about 10 percent slower.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Необязательно. RUAccent отмечает ударную гласную в каждом слове, а LoRA ударений учит голос следовать этим отметкам, поэтому слова вроде «замок» или «мука» получают ударение по смыслу. RUAccent иногда ошибается. Речь становится примерно на 10 процентов медленнее."
+          }
+        }
+      }
+    },
     "Or an App Window": {
       "localizations": {
         "ru": {
@@ -718,6 +1000,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пауза"
+          }
+        }
+      }
+    },
+    "Play": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прослушать запись"
+          }
+        }
+      }
+    },
+    "Preset name": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Название пресета"
           }
         }
       }
@@ -772,6 +1074,16 @@
         }
       }
     },
+    "Read the text aloud the way the translation should sound: calm and clear, at your usual pace. Use a quiet room and keep the microphone 20–30 cm away. 8–15 seconds is ideal.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прочитайте текст вслух так, как должен звучать перевод: спокойно и чётко, в обычном темпе. Запишитесь в тихой комнате, микрофон держите в 20–30 см. Лучше всего 8–15 секунд."
+          }
+        }
+      }
+    },
     "Ready": {
       "comment": "Qwen model state",
       "localizations": {
@@ -813,12 +1125,92 @@
         }
       }
     },
+    "Recognized automatically. Fix any word that differs from the sample.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Распознано автоматически. Исправьте слова, которые отличаются от записи."
+          }
+        }
+      }
+    },
     "Recognizing": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Распознавание"
+          }
+        }
+      }
+    },
+    "Recognizing the text…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Распознаём текст…"
+          }
+        }
+      }
+    },
+    "Record": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записать"
+          }
+        }
+      }
+    },
+    "Record Again": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записать заново"
+          }
+        }
+      }
+    },
+    "Record Your Voice": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запись своего голоса"
+          }
+        }
+      }
+    },
+    "Record Your Voice…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записать свой голос…"
+          }
+        }
+      }
+    },
+    "Recording": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запись"
+          }
+        }
+      }
+    },
+    "Reference length": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Длина эталона"
           }
         }
       }
@@ -853,6 +1245,16 @@
         }
       }
     },
+    "Reset": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сбросить"
+          }
+        }
+      }
+    },
     "Reset Style": {
       "localizations": {
         "ru": {
@@ -883,12 +1285,62 @@
         }
       }
     },
+    "Russian speech recognition isn’t available on this Mac. Type the text of the sample.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Распознавание русской речи недоступно на этом Mac. Введите текст образца."
+          }
+        }
+      }
+    },
+    "Russian stress": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Русские ударения"
+          }
+        }
+      }
+    },
+    "Russian stress unavailable: %@ Speaking without stress marks.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Русские ударения недоступны: %@ Озвучка идёт без ударений."
+          }
+        }
+      }
+    },
+    "Sampling temperature. Calm keeps the pitch even; Lively varies intonation more. Applies to every voice from the next phrase.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Температура выборки. Спокойная держит ровную высоту голоса, живая сильнее меняет интонацию. Действует для всех голосов со следующей реплики."
+          }
+        }
+      }
+    },
     "Save": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Сохранить"
+          }
+        }
+      }
+    },
+    "Save Voice": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить голос"
           }
         }
       }
@@ -913,12 +1365,12 @@
         }
       }
     },
-    "Saves the gender, style and variant. A preset with the same name is replaced.": {
+    "Saves the gender, style, variant and reference length. A preset with the same name is replaced.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Сохраняются пол, стиль и вариант. Пресет с таким же названием будет заменён."
+            "value": "Сохраняет пол, стиль, вариант и длину эталона. Пресет с тем же именем будет заменён."
           }
         }
       }
@@ -1026,6 +1478,16 @@
         }
       }
     },
+    "Speak faster when behind: 1.25 times as soon as the next subtitle is waiting, 1.5 times with two or more. Normal speed returns once it catches up.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Говорить быстрее при отставании: в 1,25 раза, как только ждёт следующая реплика, и в 1,5 раза — когда ждут две и больше. Когда очередь догнана, скорость становится обычной."
+          }
+        }
+      }
+    },
     "Speaking": {
       "localizations": {
         "ru": {
@@ -1042,6 +1504,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Озвучка"
+          }
+        }
+      }
+    },
+    "Speech recognition is off for ScreenVoice. Type the text of the sample.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Распознавание речи для ScreenVoice выключено. Введите текст образца."
           }
         }
       }
@@ -1086,12 +1558,32 @@
         }
       }
     },
+    "Stop Playback": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Остановить"
+          }
+        }
+      }
+    },
     "Stop capture to change the source language.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Остановите захват, чтобы сменить исходный язык."
+          }
+        }
+      }
+    },
+    "Stress marking failed: %@.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось расставить ударения: %@."
           }
         }
       }
@@ -1132,6 +1624,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Источник текста"
+          }
+        }
+      }
+    },
+    "Text of the sample": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Текст образца"
+          }
+        }
+      }
+    },
+    "Text to listen": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Текст для прослушивания"
+          }
+        }
+      }
+    },
+    "Text to read": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Текст для чтения"
           }
         }
       }
@@ -1206,6 +1728,26 @@
         }
       }
     },
+    "The recording of this voice is missing. Record it again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запись этого голоса не найдена. Запишите её заново."
+          }
+        }
+      }
+    },
+    "The sample was longer than 20 seconds, so it was cut at a pause to %lld s.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Образец длиннее 20 секунд, поэтому он обрезан на паузе до %lld с."
+          }
+        }
+      }
+    },
     "The selected region is too small.": {
       "localizations": {
         "ru": {
@@ -1236,6 +1778,16 @@
         }
       }
     },
+    "The stress file %@ can’t be read.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удаётся прочитать файл ударений %@."
+          }
+        }
+      }
+    },
     "The translation will appear here": {
       "localizations": {
         "ru": {
@@ -1246,12 +1798,72 @@
         }
       }
     },
+    "The voice designer produced no audio. Try another variant.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конструктор голосов не выдал звук. Попробуйте другой вариант."
+          }
+        }
+      }
+    },
+    "The voice’s reference recording is missing.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не найден эталон голоса."
+          }
+        }
+      }
+    },
     "The “%@ → %@” translation model isn’t downloaded to this Mac yet.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Модель перевода «%1$@ → %2$@» ещё не загружена на этот Mac."
+          }
+        }
+      }
+    },
+    "This voice hasn’t been created yet, so the built-in narrator speaks instead. Download the voice designer to create it.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Этот голос ещё не создан, поэтому говорит встроенный диктор. Чтобы создать его, загрузите конструктор голосов."
+          }
+        }
+      }
+    },
+    "Too long: keep it under 20 seconds, or pick a shorter text.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Слишком длинно: уложитесь в 20 секунд или выберите текст короче."
+          }
+        }
+      }
+    },
+    "Too short to clone. Read the whole text.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Слишком коротко для копирования голоса. Прочитайте весь текст."
+          }
+        }
+      }
+    },
+    "Too short to clone: choose a sample with at least 3 seconds of speech.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Слишком коротко для копирования: выберите образец, где речь длится хотя бы 3 секунды."
           }
         }
       }
@@ -1296,6 +1908,16 @@
         }
       }
     },
+    "Type any phrase to hear the voice say it. Leave empty for the default phrase.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Введите любую фразу, чтобы услышать её этим голосом. Оставьте пустым для фразы по умолчанию."
+          }
+        }
+      }
+    },
     "Until the voice is loaded, or if it fails, phrases are spoken with the system voice below.": {
       "localizations": {
         "ru": {
@@ -1316,6 +1938,16 @@
         }
       }
     },
+    "Usable, but 8–15 seconds clones best.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подойдёт, но лучше всего копируется запись на 8–15 секунд."
+          }
+        }
+      }
+    },
     "Verifying files…": {
       "localizations": {
         "ru": {
@@ -1332,6 +1964,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Голос"
+          }
+        }
+      }
+    },
+    "Voice designer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конструктор голосов"
           }
         }
       }
@@ -1386,6 +2028,16 @@
         }
       }
     },
+    "With a recording, the variant only changes small details of delivery. The same variant always sounds the same.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Для записанного голоса вариант меняет только мелкие детали подачи. Один и тот же вариант всегда звучит одинаково."
+          }
+        }
+      }
+    },
     "enhanced": {
       "comment": "Voice quality",
       "localizations": {
@@ -1408,6 +2060,17 @@
         }
       }
     },
+    "s": {
+      "comment": "Seconds unit after the reference length field",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "с"
+          }
+        }
+      }
+    },
     "standard": {
       "comment": "Voice quality",
       "localizations": {
@@ -1415,6 +2078,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "стандартный"
+          }
+        }
+      }
+    },
+    "“%@”: one speaker, no music, 8–15 seconds of calm, clear speech clones best. Check that the text below is exactly what is said.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@»: лучше всего копируется спокойная чёткая речь одного человека без музыки, 8–15 секунд. Проверьте, что текст ниже в точности совпадает со сказанным."
           }
         }
       }

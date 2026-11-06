@@ -27,6 +27,10 @@ struct LocalizationTests {
         ("Download Model", "Загрузить модель"),
         ("Save as Preset…", "Сохранить как пресет…"),
         ("Narrator, male", "Диктор, мужской"),
+        ("Voice designer", "Конструктор голосов"),
+        ("Reference length", "Длина эталона"),
+        ("Calm (0.7)", "Спокойная (0.7)"),
+        ("Text to listen", "Текст для прослушивания"),
     ])
     func russianTranslationExists(key: String, expected: String) throws {
         #expect(try Self.russian(key) == expected)

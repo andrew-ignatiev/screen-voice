@@ -8,6 +8,13 @@ struct QwenModelSpec: Sendable {
         let path: String
         let size: Int64
         let sha256: String
+        /// Where the file comes from when it isn't the spec's own repository; `path` is the same there.
+        var source: Source?
+    }
+
+    struct Source: Sendable {
+        let repository: String
+        let revision: String
     }
 
     let repository: String
@@ -18,11 +25,35 @@ struct QwenModelSpec: Sendable {
     var totalBytes: Int64 { files.reduce(0) { $0 + $1.size } }
 
     func url(for file: File) -> URL {
-        URL(string: "https://huggingface.co/\(repository)/resolve/\(revision)/\(file.path)")!
+        let repository = file.source?.repository ?? repository
+        let revision = file.source?.revision ?? revision
+        return URL(string: "https://huggingface.co/\(repository)/resolve/\(revision)/\(file.path)")!
     }
 
-    /// Qwen3-TTS 1.7B VoiceDesign, 8-bit: builds a voice from a text description. Checked for Russian
-    /// (correct transcripts with Apple's recognizer, ~0.15 s to first audio, ~3.9 GB peak while speaking).
+    /// Qwen3-TTS 1.7B Base, 8-bit: speaks every phrase by cloning a voice's reference recording. With top_k 50
+    /// it read all test numbers right and kept the reference pitch (~0.19 s to first audio, ~4.4 GB peak).
+    static let base8bit = QwenModelSpec(
+        repository: "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+        revision: "e7dd0585652209fa0d7783659aad4e8a324de11c",
+        directoryName: "Qwen3-TTS-12Hz-1.7B-Base-8bit",
+        files: [
+            File(path: "config.json", size: 5_522, sha256: "b14fba6bfd391968876248b843b095696b0188187a3d774a3bddc32544d15627"),
+            File(path: "generation_config.json", size: 245, sha256: "f1b90b4513f3b34c62851049e2492d7b4c5940daf1276f89c82b8ef04127f3aa"),
+            File(path: "merges.txt", size: 1_671_839, sha256: "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3"),
+            File(path: "model.safetensors", size: 2_417_320_525, sha256: "b965c581ccf6aa852a4124feeb7a8a111542ee7b213139368b4cc7ba7fd4728b"),
+            File(path: "model.safetensors.index.json", size: 78_070, sha256: "9592a7c0ac3261a6211978416ef1796d3841225ac0ff0f9d6bfb5d1a6b49e5e9"),
+            File(path: "preprocessor_config.json", size: 127, sha256: "efdde1022ea9d76928bf7a9cd53139138f5ba2e466e837f08f6105ab1af1c119"),
+            File(path: "tokenizer_config.json", size: 7_344, sha256: "dc3c31c3bdaedd5016382bb3cbe07323026775ad51f5a4fb564505992ae4a670"),
+            File(path: "vocab.json", size: 2_776_833, sha256: "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"),
+            File(path: "speech_tokenizer/config.json", size: 2_336, sha256: "ee65bb901c876664ab8707c487157aa1a6ee57c65969b28fb5ec9dc211e68167"),
+            File(path: "speech_tokenizer/configuration.json", size: 76, sha256: "6bc26d64eb5024b4d1dab5a52371958b429256d6c9d59787f1f5294a54e0cebd"),
+            File(path: "speech_tokenizer/model.safetensors", size: 682_293_092, sha256: "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"),
+            File(path: "speech_tokenizer/preprocessor_config.json", size: 234, sha256: "fcb3805e597e786d4067706e602f6688524640f8d3396790e2e09b5942fcbdfb"),
+        ]
+    )
+
+    /// Qwen3-TTS 1.7B VoiceDesign, 8-bit: turns a text description into a reference recording. Optional: loaded
+    /// only while a new voice is created, then unloaded.
     static let voiceDesign8bit = QwenModelSpec(
         repository: "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-8bit",
         revision: "f90d617701d9f7f4ca499291e0b57f2b3c2fd2ee",
@@ -42,6 +73,48 @@ struct QwenModelSpec: Sendable {
             File(path: "speech_tokenizer/preprocessor_config.json", size: 234, sha256: "fcb3805e597e786d4067706e602f6688524640f8d3396790e2e09b5942fcbdfb"),
         ]
     )
+}
+
+extension QwenModelSpec {
+    private static let lora = Source(
+        repository: "siriusfreak/qwen3-tts-12hz-1.7b-ru-stress-cf",
+        revision: "c16b3af3db3095120efc1ebb73f6522442bcb3b1"
+    )
+
+    /// Optional Russian stress pack (~550 MB): RUAccent's models and dictionaries, which mark the stressed
+    /// vowel of each word (`RussianStressMarker`), and siriusfreak's LoRA, which makes Base follow the marks
+    /// (`StressLoRA`). Without the LoRA the marks garble words; without marks the LoRA changes nothing.
+    static let russianStress = QwenModelSpec(
+        repository: "ruaccent/accentuator",
+        revision: "b78ae5ea1e62beaf138bed1865cd8c3b0b5ca855",
+        directoryName: "RussianStress-ruaccent-b78ae5e-lora-c16b3af",
+        files: [
+            File(path: "nn/nn_accent/config.json", size: 841, sha256: "e377f159a8fc8673e211f100d4a237d5fe3dceb3b6789a5a738bf50bda23be49"),
+            File(path: "nn/nn_accent/model.onnx", size: 803_402, sha256: "4e393144e45626f6f1062a0784ef06f921b97321a8e7b87ac2a09a892286500a"),
+            File(path: "nn/nn_accent/vocab.txt", size: 140, sha256: "242882b2f27800e49a6babf46867dabf6dc9b6535b600776a68815fe4d4f4382"),
+            File(path: "nn/nn_stress_usage_predictor/config.json", size: 822, sha256: "aa0638edf56254f123e593e96f034c2b5e68303ac207b29f64f0878dc4c22631"),
+            File(path: "nn/nn_stress_usage_predictor/model.onnx", size: 116_473_561, sha256: "3d547500637b4ddfec8880ed6d1405fd50ee9d3f0131ef8a2a69dcf961dbefeb"),
+            File(path: "nn/nn_stress_usage_predictor/vocab.txt", size: 1_080_667, sha256: "f056a69b097422652053bf87565c35543e5d81540ca4b7dddd28de4157a969e0"),
+            File(path: "nn/nn_yo_homograph_resolver/config.json", size: 625, sha256: "adf7fd2c67be1498071f447ec4a23dbe84904c49f95d1d3e6c7d9df269b9a2e9"),
+            File(path: "nn/nn_yo_homograph_resolver/model.onnx", size: 14_332_169, sha256: "42cc85bf0c4b319dfe3d89fa17b162a92fd5e1c651a657cb3d5f44978d4e70ac"),
+            File(path: "nn/nn_yo_homograph_resolver/vocab.txt", size: 48_576, sha256: "9276b81ff34cd9560563a476de6735abf5ed9a3871131644992230dc4e630056"),
+            File(path: "nn/nn_omograph/turbo3.1/added_tokens.json", size: 279_418, sha256: "071c01df9ba59b64b9d0d9af0eaac5412a5fc558d540a214ada4ee7531d38096"),
+            File(path: "nn/nn_omograph/turbo3.1/merges.txt", size: 1_213_606, sha256: "120c75258d87ba748b2025f517819fd0e0386e8d31cc6b29a21f900d395dd825"),
+            File(path: "nn/nn_omograph/turbo3.1/model.onnx", size: 359_306_923, sha256: "2cb6a174c4cdb45bd3132b4f7c8a3779fc4b6869863180ed7d0e421bcd453dbd"),
+            File(path: "nn/nn_omograph/turbo3.1/vocab.json", size: 1_555_282, sha256: "ba028ba89c029a473ac369716b4d52bb252a38004fc5dd085d18f4ada4a760b3"),
+            File(path: "dictionary/accents.json.gz", size: 20_954_156, sha256: "aa460ebba90de00fbbf3d41d121961f605b98667e45efb7920f127473b15515e"),
+            File(path: "dictionary/omographs.json.gz", size: 219_047, sha256: "04a9e81c68d65f65ba493fe0110f99e79087548c2beeec3032e2b66e28706f36"),
+            File(path: "dictionary/yo_homographs.json.gz", size: 5_747, sha256: "c4ee777bbbab87f9eac838f370ad92974e079d02b21903e480c54b5f0c8c60d1"),
+            File(path: "dictionary/yo_words.json.gz", size: 548_914, sha256: "a19fa89a964a0691d9fe4ee384783e3934904891843d8f59a1c480d67947a82a"),
+            File(path: "lora/adapter.json", size: 1_869, sha256: "d39870f47f9d3c683ad7588c808f73f991310f8a28020bdf6d9b71c64825f2bb", source: lora),
+            File(path: "lora/adapter.safetensors", size: 34_908_456, sha256: "88a94c0fbe85800d309f94bb9c28d698bf9c86d9494617b6cf4dd996cc13648b", source: lora),
+        ]
+    )
+
+    /// The LoRA adapter's folder inside an installed stress pack.
+    static func stressLoRADirectory(in pack: URL) -> URL {
+        pack.appending(path: "lora", directoryHint: .isDirectory)
+    }
 }
 
 enum QwenModelInstallState: Equatable, Sendable {
@@ -66,7 +139,7 @@ enum QwenModelStoreError: LocalizedError {
     }
 }
 
-/// Downloads, verifies and locates the Qwen3-TTS model in Application Support.
+/// Downloads, verifies and locates one Qwen3-TTS model in Application Support.
 /// Files go to a `.partial` directory first and are moved into place only after every checksum matches.
 @MainActor
 @Observable
@@ -77,7 +150,7 @@ final class QwenModelStore {
     @ObservationIgnored private var downloadTask: Task<Void, Never>?
     @ObservationIgnored private let root: URL
 
-    init(spec: QwenModelSpec = .voiceDesign8bit, root: URL = QwenModelStore.defaultRoot) {
+    init(spec: QwenModelSpec = .base8bit, root: URL = QwenModelStore.defaultRoot) {
         self.spec = spec
         self.root = root
         if root == Self.defaultRoot {

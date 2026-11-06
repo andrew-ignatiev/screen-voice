@@ -40,6 +40,7 @@ final class AppCoordinator {
         if !state.hasScreenRecordingPermission { return String(localized: "Waiting for screen recording permission") }
         if state.translationAvailability == .downloading { return String(localized: "Downloading language model…") }
         if speech.qwen.state == .loading { return String(localized: "Loading voice model…") }
+        if speech.qwen.state == .creatingVoice { return String(localized: "Creating voice…") }
         switch state.runState {
         case .idle: return state.errorMessage == nil ? String(localized: "Idle") : String(localized: "Error")
         case .starting: return String(localized: "Starting capture…")
@@ -71,6 +72,10 @@ final class AppCoordinator {
 
     func openScreenRecordingSettings() {
         open("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
+    }
+
+    func openMicrophoneSettings() {
+        open("x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")
     }
 
     func openSpokenContentSettings() {
@@ -215,14 +220,16 @@ final class AppCoordinator {
 
     // MARK: Neural voice
 
-    /// Plays the preview phrase with the selected engine, loading the Qwen model first if needed.
+    /// Plays the preview phrase with the selected engine. For Qwen, creates the voice first if it is new,
+    /// then loads Base if needed, so Listen plays exactly what subtitles will sound like.
     func previewVoice() {
         Task {
             if settings.speechEngine == .qwen, speech.qwen.modelStore.isInstalled {
+                state.errorMessage = nil
                 await prepareNeuralVoice()
                 if !state.isCaptureActive { scheduleIdleUnload() }
             }
-            speech.preview()
+            speech.preview(settings.previewText)
         }
     }
 
@@ -238,11 +245,51 @@ final class AppCoordinator {
         }
     }
 
+    func downloadVoiceDesigner() {
+        speech.qwen.designModelStore.download()
+    }
+
+    /// Downloads the Russian stress pack. A loaded model picks it up after the download (see `stressPackDidInstall`).
+    func downloadStressPack() {
+        speech.qwen.stressStore.download()
+    }
+
+    /// Called when the stress pack's download finishes: a loaded model is reloaded with it.
+    func stressPackDidInstall() {
+        Task { await speech.qwen.applyStressSetting() }
+    }
+
+    func deleteStressPack() {
+        Task { await speech.qwen.deleteStressPack() }
+    }
+
+    /// Voices already created keep working; only new ones can't be created any more.
+    func deleteVoiceDesigner() {
+        speech.qwen.designModelStore.delete()
+    }
+
+    /// Creates the selected voice if it is new (when the designer is installed), then loads Base.
     private func prepareNeuralVoice() async {
         guard settings.speechEngine == .qwen, speech.qwen.modelStore.isInstalled else { return }
+        let voice = settings.neuralVoice
+        if !speech.qwen.hasReference(for: voice) {
+            if voice.recording != nil {
+                state.errorMessage = QwenVoiceControllerError.recordingMissing.errorDescription
+            } else if speech.qwen.designModelStore.isInstalled {
+                do {
+                    try await speech.qwen.createVoice(voice)
+                } catch {
+                    state.errorMessage = String(localized: "Couldn’t create the voice: \(error.localizedDescription)")
+                }
+            } else {
+                state.errorMessage = String(localized: "This voice hasn’t been created yet, so the built-in narrator speaks instead. Download the voice designer to create it.")
+            }
+        }
         await speech.qwen.prepare()
         if case .failed(let message) = speech.qwen.state {
             state.errorMessage = String(localized: "Qwen3-TTS voice unavailable: \(message) Using the system voice.")
+        } else if let message = speech.qwen.stressError {
+            state.errorMessage = String(localized: "Russian stress unavailable: \(message) Speaking without stress marks.")
         }
     }
 
@@ -278,6 +325,9 @@ final class AppCoordinator {
         speech.apply(new)
         pipeline.apply(new, previous: old)
         // Voice changes need no reload: each phrase carries its voice.
+        if old.usedRecordings != new.usedRecordings {
+            VoiceReference.removeUnusedRecordings(keeping: new.usedRecordings, directory: speech.qwen.referenceDirectory)
+        }
         if old.speechEngine != new.speechEngine {
             if new.speechEngine == .system {
                 idleUnloadTask?.cancel()
@@ -286,6 +336,9 @@ final class AppCoordinator {
                 // Phrases keep using the system voice until the model is loaded.
                 Task { await prepareNeuralVoice() }
             }
+        }
+        if old.russianStress != new.russianStress {
+            Task { await speech.qwen.applyStressSetting() }
         }
         if old.sourceLanguage != new.sourceLanguage {
             Task { await checkTranslationAvailability() }

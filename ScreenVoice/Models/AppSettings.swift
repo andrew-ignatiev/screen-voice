@@ -81,6 +81,12 @@ struct AppSettings: Codable, Equatable, Sendable {
     var speechEngine: SpeechEngineKind = .system
     /// The Qwen3-TTS voice: gender, style description and seed.
     var neuralVoice: NeuralVoice = .defaultMale
+    /// Sampling temperature of the Qwen3-TTS voice while speaking.
+    var neuralDelivery: NeuralDelivery = .calm
+    /// Mark Russian stress for the Qwen3-TTS voice when the stress pack is installed.
+    var russianStress: Bool = true
+    /// What Listen/Preview speaks. Empty means `SpeechService.previewText`.
+    var previewText: String = ""
     /// Voices saved by the user. Built-in presets are not stored.
     var voicePresets: [VoicePreset] = []
     /// Identifier of the chosen ru-RU voice. `nil` means "best installed Russian voice".
@@ -92,6 +98,8 @@ struct AppSettings: Codable, Equatable, Sendable {
     var ocrAccuracy: OCRAccuracy = .accurate
     var minimumConfidence: Float = 0.4
     var maxQueuedPhrases: Int = 3
+    /// Speak faster while phrases are waiting (see `SpeechService.catchUpFactor`).
+    var speedUpWhenBehind: Bool = true
     var showOverlay: Bool = true
     /// Do not speak speaker labels such as "Датч:" at the start of a line.
     var skipSpeakerLabels: Bool = true
@@ -108,6 +116,9 @@ extension AppSettings {
         sourceLanguage = (try? container.decodeIfPresent(SourceLanguage.self, forKey: .sourceLanguage)) ?? defaults.sourceLanguage
         speechEngine = (try? container.decodeIfPresent(SpeechEngineKind.self, forKey: .speechEngine)) ?? defaults.speechEngine
         neuralVoice = (try? container.decodeIfPresent(NeuralVoice.self, forKey: .neuralVoice)) ?? defaults.neuralVoice
+        neuralDelivery = (try? container.decodeIfPresent(NeuralDelivery.self, forKey: .neuralDelivery)) ?? defaults.neuralDelivery
+        russianStress = (try? container.decodeIfPresent(Bool.self, forKey: .russianStress)) ?? defaults.russianStress
+        previewText = (try? container.decodeIfPresent(String.self, forKey: .previewText)) ?? defaults.previewText
         voicePresets = (try? container.decodeIfPresent([VoicePreset].self, forKey: .voicePresets)) ?? defaults.voicePresets
         voiceIdentifier = try? container.decodeIfPresent(String.self, forKey: .voiceIdentifier)
         speechRate = (try? container.decodeIfPresent(Float.self, forKey: .speechRate)) ?? defaults.speechRate
@@ -116,6 +127,7 @@ extension AppSettings {
         ocrAccuracy = (try? container.decodeIfPresent(OCRAccuracy.self, forKey: .ocrAccuracy)) ?? defaults.ocrAccuracy
         minimumConfidence = (try? container.decodeIfPresent(Float.self, forKey: .minimumConfidence)) ?? defaults.minimumConfidence
         maxQueuedPhrases = (try? container.decodeIfPresent(Int.self, forKey: .maxQueuedPhrases)) ?? defaults.maxQueuedPhrases
+        speedUpWhenBehind = (try? container.decodeIfPresent(Bool.self, forKey: .speedUpWhenBehind)) ?? defaults.speedUpWhenBehind
         showOverlay = (try? container.decodeIfPresent(Bool.self, forKey: .showOverlay)) ?? defaults.showOverlay
         skipSpeakerLabels = (try? container.decodeIfPresent(Bool.self, forKey: .skipSpeakerLabels)) ?? defaults.skipSpeakerLabels
     }
@@ -126,6 +138,11 @@ extension AppSettings {
 extension AppSettings {
     /// Built-in presets first, then the user's.
     var allVoicePresets: [VoicePreset] { VoicePreset.builtIn + voicePresets }
+
+    /// Recordings used by the current voice or a saved preset.
+    var usedRecordings: Set<UUID> {
+        Set(([neuralVoice] + voicePresets.map(\.voice)).compactMap { $0.recording?.id })
+    }
 
     /// The preset matching the current voice exactly, if any.
     var selectedVoicePreset: VoicePreset? {

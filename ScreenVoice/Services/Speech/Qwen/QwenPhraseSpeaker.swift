@@ -51,7 +51,13 @@ final class QwenPhraseSpeaker {
         return r <= 0.5 ? 0.5 + r : 1 + (r - 0.5) * 2
     }
 
-    func speak(_ text: String, voice: NeuralVoice, synthesizer: QwenSynthesizer, sampleRate: Double, completion: @escaping Completion) {
+    /// The inverse of `playbackRate(forSpeechRate:)`, used to speed the system voice up by the same factor.
+    /// Multipliers above 2× map past the slider's end (> 1); callers clamp.
+    nonisolated static func speechRate(forPlaybackRate playbackRate: Float) -> Float {
+        playbackRate <= 1 ? max(playbackRate - 0.5, 0) : 0.5 + (playbackRate - 1) / 2
+    }
+
+    func speak(_ text: String, voice: NeuralVoice, delivery: NeuralDelivery, synthesizer: QwenSynthesizer, sampleRate: Double, completion: @escaping Completion) {
         stop()
         phraseID += 1
         let id = phraseID
@@ -68,7 +74,7 @@ final class QwenPhraseSpeaker {
 
         feedTask = Task { [weak self] in
             do {
-                for try await samples in synthesizer.synthesize(text, voice: voice) {
+                for try await samples in synthesizer.synthesize(text, voice: voice, delivery: delivery) {
                     guard let self, id == self.phraseID else { return }
                     self.schedule(samples, id: id)
                 }

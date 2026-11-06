@@ -64,6 +64,12 @@ final class SpeechService {
     @ObservationIgnored private var queue = SpeechQueue(capacity: 3, maxAge: 10)
     @ObservationIgnored private var preferredEngine: SpeechEngineKind = .system
     @ObservationIgnored private var neuralVoice: NeuralVoice = .defaultMale
+    @ObservationIgnored private var neuralDelivery: NeuralDelivery = .calm
+    /// The speed setting (AVSpeechUtterance scale), before catching up.
+    @ObservationIgnored private var baseRate: Float = AVSpeechUtteranceDefaultSpeechRate
+    @ObservationIgnored private var speedsUpWhenBehind = true
+    /// Current catch-up multiplier: 1 when not behind.
+    private(set) var catchUpFactor: Float = 1
     /// Phrase being spoken and the engine speaking it. Completions for any other phrase are ignored.
     @ObservationIgnored private var current: (id: Int, engine: SpeechEngineKind)?
     @ObservationIgnored private var lastPhraseID = 0
@@ -83,26 +89,55 @@ final class SpeechService {
     func apply(_ settings: AppSettings) {
         preferredEngine = settings.speechEngine
         neuralVoice = settings.neuralVoice
-        let rate = min(max(settings.speechRate, AVSpeechUtteranceMinimumSpeechRate), AVSpeechUtteranceMaximumSpeechRate)
+        neuralDelivery = settings.neuralDelivery
+        qwen.marksStressWhenInstalled = settings.russianStress
+        baseRate = min(max(settings.speechRate, AVSpeechUtteranceMinimumSpeechRate), AVSpeechUtteranceMaximumSpeechRate)
+        speedsUpWhenBehind = settings.speedUpWhenBehind
         let volume = min(max(settings.speechVolume, 0), 1)
         system.voiceIdentifier = settings.voiceIdentifier
-        system.rate = rate
         system.volume = volume
-        neural.rate = QwenPhraseSpeaker.playbackRate(forSpeechRate: rate)
         neural.volume = volume
         queue.setCapacity(settings.maxQueuedPhrases)
         queuedCount = queue.items.count
+        updateSpeed()
     }
 
     func enqueue(_ text: String) {
         queue.enqueue(text, at: Self.now)
         queuedCount = queue.items.count
+        updateSpeed()
         speakNextIfPossible()
     }
 
-    func preview() {
+    // MARK: Catching up
+
+    /// How much faster to speak with `waiting` phrases queued behind the current one: 1.25× as soon as the
+    /// next subtitle waits, 1.5× from two.
+    nonisolated static func catchUpFactor(waiting: Int) -> Float {
+        switch waiting {
+        case ..<1: 1
+        case 1: 1.25
+        default: 1.5
+        }
+    }
+
+    /// Fastest neural playback; time stretching beyond this gets hard to follow.
+    nonisolated static let maxNeuralPlaybackRate: Float = 2.5
+
+    /// Applies the speed setting times the catch-up factor. The neural voice changes speed at once, even
+    /// mid-phrase; the system voice from its next phrase (AVSpeechSynthesizer can't change a running one).
+    private func updateSpeed() {
+        catchUpFactor = speedsUpWhenBehind ? Self.catchUpFactor(waiting: queue.items.count) : 1
+        let playback = QwenPhraseSpeaker.playbackRate(forSpeechRate: baseRate) * catchUpFactor
+        neural.rate = min(playback, Self.maxNeuralPlaybackRate)
+        system.rate = min(QwenPhraseSpeaker.speechRate(forPlaybackRate: playback), AVSpeechUtteranceMaximumSpeechRate)
+    }
+
+    /// Speaks `text`, or the built-in phrase when it is blank, after stopping everything else.
+    func preview(_ text: String = "") {
         stopAll()
-        enqueue(Self.previewText)
+        let custom = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        enqueue(custom.isEmpty ? Self.previewText : custom)
     }
 
     func pause() {
@@ -138,6 +173,7 @@ final class SpeechService {
     func clearQueue() {
         queue.removeAll()
         queuedCount = 0
+        updateSpeed()
     }
 
     func stopAll() {
@@ -158,10 +194,11 @@ final class SpeechService {
         let id = lastPhraseID
         isSpeaking = true
         queuedCount = queue.items.count
+        updateSpeed()
 
         if preferredEngine == .qwen, let synthesizer = qwen.readySynthesizer {
             current = (id, .qwen)
-            neural.speak(item.text, voice: neuralVoice, synthesizer: synthesizer, sampleRate: qwen.sampleRate) { [weak self] result in
+            neural.speak(item.text, voice: neuralVoice, delivery: neuralDelivery, synthesizer: synthesizer, sampleRate: qwen.sampleRate) { [weak self] result in
                 guard let self else { return }
                 if case .failure(let error) = result {
                     self.neuralPhraseFailed(id, text: item.text, error: error)

@@ -115,6 +115,14 @@ struct MainView: View {
             }
             .disabled(!state.isCaptureActive)
 
+            Toggle("Catch up", isOn: Binding(
+                get: { coordinator.settings.speedUpWhenBehind },
+                set: { coordinator.settingsStore.settings.speedUpWhenBehind = $0 }
+            ))
+            .toggleStyle(.checkbox)
+            .controlSize(.regular)
+            .help("Speak faster when behind: 1.25 times as soon as the next subtitle is waiting, 1.5 times with two or more. Normal speed returns once it catches up.")
+
             Spacer()
 
             StatusPill(text: coordinator.statusText, active: state.isCaptureActive, paused: state.runState == .paused)
@@ -141,6 +149,11 @@ struct MainView: View {
                         set: { coordinator.setOverlayVisible($0) }
                     ))
                     Spacer()
+                    if coordinator.speech.catchUpFactor > 1 {
+                        Text("Faster: \(coordinator.speech.catchUpFactor.formatted(.number.precision(.fractionLength(0...2))))×")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.orange)
+                    }
                     if coordinator.speech.queuedCount > 0 {
                         Text("In queue: \(coordinator.speech.queuedCount)")
                             .font(.caption)
@@ -258,7 +271,7 @@ private struct NeuralModelBanner: View {
                     .font(.headline)
                 Text("The neural voice is selected, but its model isn’t downloaded yet. Until then, phrases are spoken with the system voice.")
                     .fixedSize(horizontal: false, vertical: true)
-                NeuralModelRow()
+                NeuralModelRow(kind: .speech)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(6)

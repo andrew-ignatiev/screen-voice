@@ -32,7 +32,9 @@ struct SettingsView: View {
                     }
                 }
                 if store.settings.speechEngine == .qwen {
-                    NeuralModelRow()
+                    NeuralModelRow(kind: .speech)
+                    NeuralModelRow(kind: .designer)
+                    NeuralModelRow(kind: .stress)
                     NeuralVoiceSettings()
                     Text("Until the voice is loaded, or if it fails, phrases are spoken with the system voice below.")
                         .font(.caption)
@@ -63,6 +65,7 @@ struct SettingsView: View {
                     in: AppSettings.queueRange
                 )
                 if store.settings.speechEngine != .qwen {
+                    PreviewTextField()
                     Button("Preview") { coordinator.previewVoice() }
                         .disabled(isActive)
                 }
@@ -111,45 +114,112 @@ struct SettingsView: View {
     }
 }
 
-/// Download / status / delete for the Qwen3-TTS model.
+/// Download / status / delete for a Qwen3-TTS model or the Russian stress pack.
 struct NeuralModelRow: View {
+    enum Kind {
+        /// Base: speaks every phrase.
+        case speech
+        /// VoiceDesign: creates new voices from a description. Optional.
+        case designer
+        /// RUAccent + stress LoRA. Optional.
+        case stress
+    }
+
+    let kind: Kind
     @Environment(AppCoordinator.self) private var coordinator
 
     var body: some View {
         let qwen = coordinator.speech.qwen
-        let size = ByteCountFormatter.string(fromByteCount: qwen.modelStore.spec.totalBytes, countStyle: .file)
-        LabeledContent("Model") {
-            switch qwen.modelStore.state {
-            case .notInstalled:
-                Button("Download (\(size))") { coordinator.downloadNeuralModel() }
-            case .downloading(let fraction):
-                HStack {
-                    ProgressView(value: fraction)
-                        .frame(width: 140)
-                    Text("\(Int(fraction * 100))%")
-                        .monospacedDigit()
-                    Button("Cancel") { qwen.modelStore.cancelDownload() }
-                }
-            case .verifying:
-                HStack {
-                    ProgressView().controlSize(.small)
-                    Text("Verifying files…")
-                }
-            case .installed:
-                HStack {
-                    Text(Self.loadStateText(qwen.state))
-                        .foregroundStyle(.secondary)
-                    Button("Delete", role: .destructive) { coordinator.deleteNeuralModel() }
-                        .disabled(coordinator.state.isCaptureActive)
-                }
-            case .failed(let message):
-                VStack(alignment: .trailing) {
-                    Text(message)
-                        .foregroundStyle(.red)
-                        .font(.caption)
-                    Button("Retry") { coordinator.downloadNeuralModel() }
+        @Bindable var settings = coordinator.settingsStore
+        let store = switch kind {
+        case .speech: qwen.modelStore
+        case .designer: qwen.designModelStore
+        case .stress: qwen.stressStore
+        }
+        let size = ByteCountFormatter.string(fromByteCount: store.spec.totalBytes, countStyle: .file)
+        let busy = coordinator.state.isCaptureActive || qwen.state == .creatingVoice
+        VStack(alignment: .leading, spacing: 4) {
+            LabeledContent(title) {
+                switch store.state {
+                case .notInstalled:
+                    Button("Download (\(size))") { download() }
+                case .downloading(let fraction):
+                    HStack {
+                        ProgressView(value: fraction)
+                            .frame(width: 140)
+                        Text("\(Int(fraction * 100))%")
+                            .monospacedDigit()
+                        Button("Cancel") { store.cancelDownload() }
+                    }
+                case .verifying:
+                    HStack {
+                        ProgressView().controlSize(.small)
+                        Text("Verifying files…")
+                    }
+                case .installed:
+                    HStack {
+                        if kind == .stress {
+                            Toggle("Mark stress", isOn: $settings.settings.russianStress)
+                                .toggleStyle(.checkbox)
+                                .disabled(qwen.state == .loading || qwen.state == .creatingVoice)
+                        } else {
+                            Text(kind == .speech ? Self.loadStateText(qwen.state) : String(localized: "Installed", comment: "Qwen model state"))
+                                .foregroundStyle(.secondary)
+                        }
+                        Button("Delete", role: .destructive) { delete() }
+                            .disabled(busy || (kind == .stress && qwen.state == .loading))
+                    }
+                case .failed(let message):
+                    VStack(alignment: .trailing) {
+                        Text(message)
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                        Button("Retry") { download() }
+                    }
                 }
             }
+            if kind == .designer {
+                Text("Optional. Needed only to create a new voice from its description; it is loaded for a few seconds and then unloaded. The built-in narrators and voices already created work without it.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if kind == .stress {
+                Text("Optional. RUAccent marks the stressed vowel of each word and a stress LoRA makes the voice follow the marks, so words like замок or мука are stressed by their meaning. RUAccent still guesses wrong now and then. Speech gets about 10 percent slower.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if let error = qwen.stressError, store.state == .installed {
+                    Text("Russian stress unavailable: \(error) Speaking without stress marks.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            }
+        }
+        .onChange(of: store.state) { _, state in
+            if kind == .stress, state == .installed { coordinator.stressPackDidInstall() }
+        }
+    }
+
+    private var title: LocalizedStringKey {
+        switch kind {
+        case .speech: "Model"
+        case .designer: "Voice designer"
+        case .stress: "Russian stress"
+        }
+    }
+
+    private func download() {
+        switch kind {
+        case .speech: coordinator.downloadNeuralModel()
+        case .designer: coordinator.downloadVoiceDesigner()
+        case .stress: coordinator.downloadStressPack()
+        }
+    }
+
+    private func delete() {
+        switch kind {
+        case .speech: coordinator.deleteNeuralModel()
+        case .designer: coordinator.deleteVoiceDesigner()
+        case .stress: coordinator.deleteStressPack()
         }
     }
 
@@ -157,8 +227,47 @@ struct NeuralModelRow: View {
         switch state {
         case .unloaded: String(localized: "Installed", comment: "Qwen model state")
         case .loading: String(localized: "Loading into memory…")
+        case .creatingVoice: String(localized: "Creating voice…")
         case .ready: String(localized: "Ready", comment: "Qwen model state")
         case .failed(let message): String(localized: "Error: \(message)")
+        }
+    }
+}
+
+/// Multi-line field for the phrase Listen/Preview speaks. Left empty, the built-in phrase is used.
+struct PreviewTextField: View {
+    @Environment(AppCoordinator.self) private var coordinator
+
+    var body: some View {
+        @Bindable var store = coordinator.settingsStore
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Text to listen")
+            TextEditor(text: $store.settings.previewText)
+                .font(.body)
+                .frame(minHeight: 54, maxHeight: 120)
+                .scrollContentBackground(.hidden)
+                .padding(4)
+                .background(.background, in: RoundedRectangle(cornerRadius: 6))
+                .overlay(alignment: .topLeading) {
+                    if store.settings.previewText.isEmpty {
+                        Text(verbatim: SpeechService.previewText)
+                            .foregroundStyle(.tertiary)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 4)
+                            .allowsHitTesting(false)
+                    }
+                }
+                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(.separator))
+            HStack(alignment: .firstTextBaseline) {
+                Text("Type any phrase to hear the voice say it. Leave empty for the default phrase.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if !store.settings.previewText.isEmpty {
+                    Button("Reset") { store.settings.previewText = "" }
+                        .controlSize(.small)
+                }
+            }
         }
     }
 }

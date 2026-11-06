@@ -10,6 +10,8 @@
 		5C0000000000000000000601 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = 5C0000000000000000000701 /* MLX */; };
 		5C0000000000000000000602 /* MLXAudioCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5C0000000000000000000702 /* MLXAudioCore */; };
 		5C0000000000000000000603 /* MLXAudioTTS in Frameworks */ = {isa = PBXBuildFile; productRef = 5C0000000000000000000703 /* MLXAudioTTS */; };
+		5C0000000000000000000604 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = 5C0000000000000000000704 /* MLXNN */; };
+		5C0000000000000000000605 /* onnxruntime in Frameworks */ = {isa = PBXBuildFile; productRef = 5C0000000000000000000705 /* onnxruntime */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,6 +52,8 @@
 				5C0000000000000000000601 /* MLX in Frameworks */,
 				5C0000000000000000000602 /* MLXAudioCore in Frameworks */,
 				5C0000000000000000000603 /* MLXAudioTTS in Frameworks */,
+				5C0000000000000000000604 /* MLXNN in Frameworks */,
+				5C0000000000000000000605 /* onnxruntime in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -106,6 +110,8 @@
 				5C0000000000000000000701 /* MLX */,
 				5C0000000000000000000702 /* MLXAudioCore */,
 				5C0000000000000000000703 /* MLXAudioTTS */,
+				5C0000000000000000000704 /* MLXNN */,
+				5C0000000000000000000705 /* onnxruntime */,
 			);
 			productName = ScreenVoice;
 			productReference = 5C0000000000000000000011 /* ScreenVoice.app */;
@@ -166,6 +172,7 @@
 			packageReferences = (
 				5C0000000000000000000801 /* XCRemoteSwiftPackageReference "mlx-swift" */,
 				5C0000000000000000000802 /* XCRemoteSwiftPackageReference "mlx-audio-swift" */,
+				5C0000000000000000000803 /* XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5C0000000000000000000003 /* Products */;
@@ -357,6 +364,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = ScreenVoice;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "ScreenVoice records your voice only when you choose Record Your Voice, to clone it for speech. The recording stays on this Mac.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "ScreenVoice recognizes the words of a voice sample you import, so you don’t have to type them. Recognition runs on this Mac.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -384,6 +393,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = ScreenVoice;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "ScreenVoice records your voice only when you choose Record Your Voice, to clone it for speech. The recording stays on this Mac.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "ScreenVoice recognizes the words of a voice sample you import, so you don’t have to type them. Recognition runs on this Mac.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -478,6 +489,14 @@
 				revision = 624fd5410b2fc8ea06f955500c9ac078e405261f;
 			};
 		};
+		5C0000000000000000000803 /* XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/microsoft/onnxruntime-swift-package-manager";
+			requirement = {
+				kind = revision;
+				revision = b7fb7f7dea8a2469e6335d95a61b8f36d0dc83b2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -495,6 +514,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 5C0000000000000000000802 /* XCRemoteSwiftPackageReference "mlx-audio-swift" */;
 			productName = MLXAudioTTS;
+		};
+		5C0000000000000000000704 /* MLXNN */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5C0000000000000000000801 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXNN;
+		};
+		5C0000000000000000000705 /* onnxruntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5C0000000000000000000803 /* XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager" */;
+			productName = onnxruntime;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

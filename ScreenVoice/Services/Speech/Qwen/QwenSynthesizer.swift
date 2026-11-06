@@ -3,6 +3,7 @@ import MLX
 import MLXAudioCore
 import MLXAudioTTS
 import os
+import Synchronization
 
 enum QwenSynthesizerError: LocalizedError {
     case notLoaded
@@ -32,7 +33,7 @@ enum QwenSynthesizerError: LocalizedError {
 ///
 /// A started generation always runs to completion, even if nobody listens any more. Generation is ~3× faster
 /// than playback, so by the time a phrase is skipped it has usually finished anyway, and the next phrase never
-/// overlaps a half-cancelled one.
+/// overlaps a half-cancelled one. A generation cancelled while it still waits for its turn is skipped.
 actor QwenSynthesizer {
     static let language = "russian"
     /// Seconds of audio per streamed chunk. 0.5 s gives ~0.2 s to first audio on Apple silicon.
@@ -180,19 +181,51 @@ actor QwenSynthesizer {
         voice: NeuralVoice,
         delivery: NeuralDelivery = .calm
     ) -> AsyncThrowingStream<[Float], Error> {
+        start(text, voice: voice, delivery: delivery).audio
+    }
+
+    /// A phrase being generated. The stream buffers every chunk, so generation can run ahead of playback.
+    struct Synthesis: Sendable {
+        let audio: AsyncThrowingStream<[Float], Error>
+        /// Drops the phrase. A generation still waiting for its turn never starts; a started one finishes
+        /// unheard (see the type comment).
+        let cancel: @Sendable () -> Void
+    }
+
+    /// Starts generating `text` now, e.g. the next phrase while the current one plays. Generations take turns,
+    /// so it begins as soon as the one before it is done. Ending iteration early cancels it the same way.
+    nonisolated func start(_ text: String, voice: NeuralVoice, delivery: NeuralDelivery = .calm) -> Synthesis {
         let (stream, continuation) = AsyncThrowingStream<[Float], Error>.makeStream()
-        Task { await self.generate(text, voice: voice, delivery: delivery, into: continuation) }
-        return stream
+        // A flag, not Task cancellation: cancelling the task would also stop a started generation midway.
+        let dropped = Flag()
+        Task { await self.generate(text, voice: voice, delivery: delivery, unless: dropped, into: continuation) }
+        continuation.onTermination = { _ in dropped.set() }
+        return Synthesis(audio: stream, cancel: {
+            dropped.set()
+            continuation.finish()
+        })
+    }
+
+    final class Flag: Sendable {
+        private let value = Mutex(false)
+        var isSet: Bool { value.withLock { $0 } }
+        func set() { value.withLock { $0 = true } }
     }
 
     private func generate(
         _ text: String,
         voice: NeuralVoice,
         delivery: NeuralDelivery,
+        unless dropped: Flag,
         into continuation: AsyncThrowingStream<[Float], Error>.Continuation
     ) async {
         await acquire()
         defer { release() }
+        // Dropped while waiting for its turn (a skipped or cleared phrase): don't generate it at all.
+        if dropped.isSet {
+            continuation.finish()
+            return
+        }
         guard let model else {
             continuation.finish(throwing: QwenSynthesizerError.notLoaded)
             return

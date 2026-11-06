@@ -57,7 +57,8 @@ final class QwenPhraseSpeaker {
         playbackRate <= 1 ? max(playbackRate - 0.5, 0) : 0.5 + (playbackRate - 1) / 2
     }
 
-    func speak(_ text: String, voice: NeuralVoice, delivery: NeuralDelivery, synthesizer: QwenSynthesizer, sampleRate: Double, completion: @escaping Completion) {
+    /// Plays `audio`, a phrase's stream from `QwenSynthesizer`, possibly generated (partly) ahead already.
+    func speak(_ audio: AsyncThrowingStream<[Float], Error>, sampleRate: Double, completion: @escaping Completion) {
         stop()
         phraseID += 1
         let id = phraseID
@@ -74,7 +75,7 @@ final class QwenPhraseSpeaker {
 
         feedTask = Task { [weak self] in
             do {
-                for try await samples in synthesizer.synthesize(text, voice: voice, delivery: delivery) {
+                for try await samples in audio {
                     guard let self, id == self.phraseID else { return }
                     self.schedule(samples, id: id)
                 }

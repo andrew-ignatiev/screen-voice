@@ -73,6 +73,20 @@ final class SpeechService {
     /// Phrase being spoken and the engine speaking it. Completions for any other phrase are ignored.
     @ObservationIgnored private var current: (id: Int, engine: SpeechEngineKind)?
     @ObservationIgnored private var lastPhraseID = 0
+    /// The next queued phrase, generated while the current one plays, so it starts without the ~0.2 s wait.
+    @ObservationIgnored private var prefetched: Prefetch?
+
+    private struct Prefetch {
+        let item: SpeechQueue.Item
+        let voice: NeuralVoice
+        let delivery: NeuralDelivery
+        let synthesizer: QwenSynthesizer
+        let synthesis: QwenSynthesizer.Synthesis
+
+        func isFor(_ item: SpeechQueue.Item, voice: NeuralVoice, delivery: NeuralDelivery, synthesizer: QwenSynthesizer) -> Bool {
+            self.item == item && self.voice == voice && self.delivery == delivery && self.synthesizer === synthesizer
+        }
+    }
 
     /// Spoken content, not UI: always Russian (the target language), never localized.
     static let previewText = "Привет! Так будет звучать перевод субтитров."
@@ -100,6 +114,7 @@ final class SpeechService {
         queue.setCapacity(settings.maxQueuedPhrases)
         queuedCount = queue.items.count
         updateSpeed()
+        prefetchNext()
     }
 
     func enqueue(_ text: String) {
@@ -107,6 +122,7 @@ final class SpeechService {
         queuedCount = queue.items.count
         updateSpeed()
         speakNextIfPossible()
+        prefetchNext()
     }
 
     // MARK: Catching up
@@ -174,6 +190,7 @@ final class SpeechService {
         queue.removeAll()
         queuedCount = 0
         updateSpeed()
+        cancelPrefetch()
     }
 
     func stopAll() {
@@ -198,7 +215,9 @@ final class SpeechService {
 
         if preferredEngine == .qwen, let synthesizer = qwen.readySynthesizer {
             current = (id, .qwen)
-            neural.speak(item.text, voice: neuralVoice, delivery: neuralDelivery, synthesizer: synthesizer, sampleRate: qwen.sampleRate) { [weak self] result in
+            let audio = takePrefetched(item, synthesizer: synthesizer)
+                ?? synthesizer.start(item.text, voice: neuralVoice, delivery: neuralDelivery).audio
+            neural.speak(audio, sampleRate: qwen.sampleRate) { [weak self] result in
                 guard let self else { return }
                 if case .failure(let error) = result {
                     self.neuralPhraseFailed(id, text: item.text, error: error)
@@ -206,9 +225,46 @@ final class SpeechService {
                     self.phraseEnded(id)
                 }
             }
+            prefetchNext()
         } else {
+            cancelPrefetch()
             speakWithSystemVoice(item.text, id: id)
         }
+    }
+
+    // MARK: Generating ahead
+
+    /// While a neural phrase plays, starts generating the phrase queued after it. Only one phrase is generated
+    /// ahead; if the queue's head changes (dropped as too old, trimmed, cleared) or the voice changes, the
+    /// prefetch is replaced. Generation is ~3× faster than playback, so it is usually done before it's needed.
+    private func prefetchNext() {
+        guard preferredEngine == .qwen, current?.engine == .qwen,
+              let synthesizer = qwen.readySynthesizer, let next = queue.items.first else {
+            cancelPrefetch()
+            return
+        }
+        if prefetched?.isFor(next, voice: neuralVoice, delivery: neuralDelivery, synthesizer: synthesizer) == true { return }
+        cancelPrefetch()
+        prefetched = Prefetch(
+            item: next, voice: neuralVoice, delivery: neuralDelivery, synthesizer: synthesizer,
+            synthesis: synthesizer.start(next.text, voice: neuralVoice, delivery: neuralDelivery)
+        )
+    }
+
+    /// The audio generated ahead for `item`, if it matches; any other prefetch is dropped.
+    private func takePrefetched(_ item: SpeechQueue.Item, synthesizer: QwenSynthesizer) -> AsyncThrowingStream<[Float], Error>? {
+        guard let prefetch = prefetched else { return nil }
+        prefetched = nil
+        if prefetch.isFor(item, voice: neuralVoice, delivery: neuralDelivery, synthesizer: synthesizer) {
+            return prefetch.synthesis.audio
+        }
+        prefetch.synthesis.cancel()
+        return nil
+    }
+
+    private func cancelPrefetch() {
+        prefetched?.synthesis.cancel()
+        prefetched = nil
     }
 
     private func speakWithSystemVoice(_ text: String, id: Int) {

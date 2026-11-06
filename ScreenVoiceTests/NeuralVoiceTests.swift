@@ -224,6 +224,12 @@ struct NeuralVoiceTests {
         #expect(old.speedUpWhenBehind, "on by default, also for settings saved before it existed")
     }
 
+    @Test func synthesizerCapsTheGPUBufferCache() {
+        _ = QwenSynthesizer()
+        #expect(Memory.cacheLimit == QwenSynthesizer.gpuCacheLimit)
+        #expect(QwenSynthesizer.gpuCacheLimit == 128 * 1_048_576)
+    }
+
     // MARK: Model store
 
     @Test(arguments: [QwenModelSpec.base8bit, .voiceDesign8bit])

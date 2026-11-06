@@ -48,7 +48,7 @@ final class AppCoordinator {
         case .running:
             if speech.isSpeaking { return String(localized: "Speaking") }
             if state.isTranslating { return String(localized: "Translating") }
-            if !state.recognizedLines.isEmpty { return String(localized: "Recognizing") }
+            if state.hasRecognizedText { return String(localized: "Recognizing") }
             return String(localized: "Capture active")
         }
     }
@@ -359,8 +359,9 @@ extension AppCoordinator: PipelineDelegate {
     func pipeline(_ pipeline: PipelineCoordinator, didEmit event: PipelineEvent) {
         switch event {
         case .recognized(let lines, let duration):
-            state.recognizedLines = lines.map(\.text)
+            state.recognizedLineCount = lines.count
             state.lastOCRDuration = duration
+            if state.hasRecognizedText == lines.isEmpty { state.hasRecognizedText = !lines.isEmpty }
         case .confirmed(let phrase):
             state.currentOriginal = phrase
         case .translating(let active):

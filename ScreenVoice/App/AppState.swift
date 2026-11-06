@@ -19,9 +19,12 @@ final class AppState {
     var translationAvailability: TranslationAvailability = .unknown
     var hasRussianVoice = true
 
-    /// Raw lines from the most recent OCR pass (shown for diagnostics).
-    var recognizedLines: [String] = []
+    /// Diagnostics of the most recent OCR pass. They change on every frame, so only `OCRStatsLabel` reads them;
+    /// views that read other state don't re-render with each frame.
+    var recognizedLineCount = 0
     var lastOCRDuration: TimeInterval?
+    /// Whether the last OCR pass found text. Set only when it changes (it drives the status text).
+    var hasRecognizedText = false
 
     var currentOriginal = ""
     var currentTranslation = ""
@@ -41,8 +44,9 @@ final class AppState {
     }
 
     func clearSession() {
-        recognizedLines = []
+        recognizedLineCount = 0
         lastOCRDuration = nil
+        hasRecognizedText = false
         currentOriginal = ""
         currentTranslation = ""
         isTranslating = false

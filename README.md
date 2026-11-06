@@ -49,7 +49,7 @@ Typical use: a film, stream, or game with English subtitles, and you want to *he
 | Metal Toolchain | Required to build MLX: `xcodebuild -downloadComponent MetalToolchain` |
 | Russian system voice | e.g. Milena or Yuri. Needed for the system engine and as the fallback for Qwen |
 | Apple Translation model | For the chosen language pair; the app offers to download it |
-| Qwen3-TTS (optional) | ~3.1 GB download, ~4 GB RAM while running |
+| Qwen3-TTS (optional) | ~3.1 GB download, ~3.6 GB RAM while running |
 
 ## Install and build
 
@@ -273,7 +273,7 @@ The project builds with Swift 6 and `SWIFT_STRICT_CONCURRENCY = complete`.
 | Runtime | [mlx-audio-swift](https://github.com/Blaizzy/mlx-audio-swift) `624fd54` on [mlx-swift](https://github.com/ml-explore/mlx-swift) `ac4ae9a`, pinned before MLX 0.32.2, which slows Metal token generation by ~50% |
 | Storage | `~/Library/Containers/app.screenvoice.ScreenVoice/Data/Library/Application Support/ScreenVoice/Models/`; created voices in `…/ScreenVoice/VoiceReferences/` |
 | Download | 12 files per model, 3.1 GB each. Each file's size and SHA-256 are checked before the folder is moved into place. Resumes per file. Files of the 0.6B model used by earlier builds are deleted automatically |
-| Memory | ~4.4 GB peak while speaking. Only one model is in memory at a time. Loaded on Start; unloaded on Stop and 2 min after a preview |
+| Memory | ~3.6 GB while speaking: 3.1 GB of weights plus MLX's GPU buffer cache, capped at 128 MB (by default it grew to ~3 GB more, for no speed gain; the audio is bit-identical either way). Up to ~4.4 GB briefly while loading. Only one model is in memory at a time. Loaded on Start; unloaded on Stop and 2 min after a preview |
 | Sampling | `top_k 50`, as in the models' `generation_config.json`. mlx-audio-swift leaves it at 0 (no limit), which made speech harsher, misread numbers and let the voice drift |
 
 ### Measured latency and quality
@@ -334,13 +334,14 @@ The optional **Russian stress** pack (~550 MB) makes the neural voice stress wor
 | Stress | The model's guess | RUAccent's marks, followed |
 | First audio | ~0.19 s | ~0.21 s |
 | Speed | ~0.32 of real time | ~0.35 of real time |
-| Memory | ~4.4 GB | +~0.9 GB (RUAccent on ONNX Runtime) |
+| Memory | ~3.6 GB | +~0.2 GB (RUAccent on ONNX Runtime) |
 
 - The port matches the Python library (RUAccent 1.5.8.3, `use_dictionary=True`) exactly on 485 test lines, with three fixes, also applied to the Python reference:
   - Model labels are matched to words by character offset. RUAccent matched them by list position, so after "..." or "?!" every later label landed on the wrong word.
   - Each homograph variant is scored on its own; the batched path normalized over the whole batch.
   - Sentences are split by a simple rule instead of razdel.
 - The ONNX models run with basic graph optimization: full optimization in ONNX Runtime 1.24 shifts the character model's scores enough to change marks on rare words.
+- The ONNX weights are memory-mapped rather than copied: next to each `model.onnx` the app writes a small `model.mapped.onnx` whose tensors point into the original file by offset, so nothing is duplicated on disk. ONNX Runtime otherwise copies them into its heap, ~0.9 GB for the pack instead of ~0.2 GB.
 - The first load after installing builds a compact table from the dictionary (`dictionary/accents.table`, 88 MB, a few seconds). After that it is memory-mapped.
 - In a listening test on 16 hard lines, LoRA + RUAccent marks sounded better than the plain model. Hand-checked marks were better still, because RUAccent got about 8 of the lines' homographs and ё words wrong (*узнаем/узнаём*, *нёбо*, *щавель*). RUAccent's larger big_poetry homograph model made as many mistakes.
 - **Mark stress** turns it off without deleting the pack; the model reloads. If the pack fails to load, phrases are spoken without marks and the settings show why.
@@ -383,6 +384,7 @@ ScreenVoice/
 │           ├── ByteLevelBPETokenizer.swift RoBERTa tokenizer with RUAccent's 10 000 added word forms
 │           ├── StressDictionary.swift    Memory-mapped table of 3.2 million stressed word forms
 │           ├── ONNXModel.swift           ONNX Runtime session wrapper
+│           ├── ONNXMappedGraph.swift     Rewrites a model so its weights are memory-mapped
 │           └── StressLoRA.swift          Runtime LoRA on the talker's quantized layers
 ├── Views/                            Main window, source picker, settings, overlay, menu bar
 └── Resources/
@@ -429,6 +431,7 @@ xcodebuild -project ScreenVoice.xcodeproj -scheme ScreenVoice -destination 'plat
 | `LocalizationTests` | English development language, Russian translations present, format strings with arguments, system language names, spoken text stays Russian |
 | `NeuralVoiceTests` | Voice description, gender switching, presets (save, replace, delete, built-ins), settings compatibility, reference texts and bundled narrators, reference file naming, recorded voices (file, transcript, trimming, cleanup), delivery temperature, speed mapping, model install checks, removal of old model files, plus **end-to-end**: Russian synthesis speed, identical audio for the same voice, creating a voice with VoiceDesign and speaking it with Base, speaking a 48 kHz recorded voice, serialized generation, the stress LoRA (196 wrapped layers, numeric check), speaking with stress marks, fallback when the pack is broken (these run only when the models are installed in the app container) |
 | `RussianStressTests` | RUAccent text rules against Python, pinned stress pack, settings default, and with the pack installed: token ids identical to Hugging Face, marks identical to the Python reference on 485 lines (`RussianStressGolden.json`) |
+| `ONNXMappedGraphTests` | A hand-built ONNX model runs from its memory-mapped graph with the same outputs; a damaged graph falls back to the original and is rewritten |
 
 ## Privacy
 

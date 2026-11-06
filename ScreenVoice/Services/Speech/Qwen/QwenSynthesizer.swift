@@ -40,6 +40,12 @@ actor QwenSynthesizer {
     /// Both models ship `top_k 50` in generation_config.json, but mlx-audio-swift's defaults leave it at 0
     /// (no limit). Without it speech gets harsher, words are misread and the voice drifts.
     static let topK = 50
+    /// MLX keeps freed GPU buffers for reuse, by default up to the memory limit: ~2–3 GB on top of the 3.1 GB
+    /// of weights while speaking, and ~1.9 GB still held after unloading. Generation allocates buffers of the
+    /// same sizes again and again, so a small cache serves it as well: with 128 MB the audio is bit-identical and
+    /// first audio and generation speed are unchanged (measured over 25 phrases with the stress LoRA).
+    static let gpuCacheLimit = 128 << 20
+    private static let memoryConfigured: Void = { Memory.cacheLimit = gpuCacheLimit }()
 
     private var model: Qwen3TTSModel?
     private var modelDirectory: URL?
@@ -63,6 +69,7 @@ actor QwenSynthesizer {
     private var waiters: [CheckedContinuation<Void, Never>] = []
 
     init(referenceDirectory: URL = VoiceReference.defaultDirectory, bundle: Bundle = .main) {
+        _ = Self.memoryConfigured
         self.referenceDirectory = referenceDirectory
         self.bundle = bundle
     }

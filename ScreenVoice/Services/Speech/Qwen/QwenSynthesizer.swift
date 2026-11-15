@@ -3,6 +3,7 @@ import MLX
 import MLXAudioCore
 import MLXAudioTTS
 import os
+import Synchronization
 
 enum QwenSynthesizerError: LocalizedError {
     case notLoaded
@@ -32,7 +33,7 @@ enum QwenSynthesizerError: LocalizedError {
 ///
 /// A started generation always runs to completion, even if nobody listens any more. Generation is ~3× faster
 /// than playback, so by the time a phrase is skipped it has usually finished anyway, and the next phrase never
-/// overlaps a half-cancelled one.
+/// overlaps a half-cancelled one. A generation cancelled while it still waits for its turn is skipped.
 actor QwenSynthesizer {
     static let language = "russian"
     /// Seconds of audio per streamed chunk. 0.5 s gives ~0.2 s to first audio on Apple silicon.
@@ -40,6 +41,12 @@ actor QwenSynthesizer {
     /// Both models ship `top_k 50` in generation_config.json, but mlx-audio-swift's defaults leave it at 0
     /// (no limit). Without it speech gets harsher, words are misread and the voice drifts.
     static let topK = 50
+    /// MLX keeps freed GPU buffers for reuse, by default up to the memory limit: ~2–3 GB on top of the 3.1 GB
+    /// of weights while speaking, and ~1.9 GB still held after unloading. Generation allocates buffers of the
+    /// same sizes again and again, so a small cache serves it as well: with 128 MB the audio is bit-identical and
+    /// first audio and generation speed are unchanged (measured over 25 phrases with the stress LoRA).
+    static let gpuCacheLimit = 128 << 20
+    private static let memoryConfigured: Void = { Memory.cacheLimit = gpuCacheLimit }()
 
     private var model: Qwen3TTSModel?
     private var modelDirectory: URL?
@@ -62,9 +69,39 @@ actor QwenSynthesizer {
     private var isBusy = false
     private var waiters: [CheckedContinuation<Void, Never>] = []
 
+    /// Phrases to generate, in the order `start` was called.
+    private nonisolated let requests: AsyncStream<Request>.Continuation
+
+    private struct Request: Sendable {
+        let text: String
+        let voice: NeuralVoice
+        let delivery: NeuralDelivery
+        let dropped: Flag
+        let started: Flag
+        let audio: AsyncThrowingStream<[Float], Error>.Continuation
+    }
+
     init(referenceDirectory: URL = VoiceReference.defaultDirectory, bundle: Bundle = .main) {
+        _ = Self.memoryConfigured
         self.referenceDirectory = referenceDirectory
         self.bundle = bundle
+        let (stream, requests) = AsyncStream<Request>.makeStream()
+        self.requests = requests
+        // One task generates the phrases one by one, so they come out in the order they were asked for.
+        // The priority is fixed: speech must not depend on where the synthesizer happened to be created.
+        Task(priority: .userInitiated) { [weak self] in
+            for await request in stream {
+                guard let self else {
+                    request.audio.finish(throwing: QwenSynthesizerError.notLoaded)
+                    continue
+                }
+                await self.generate(request)
+            }
+        }
+    }
+
+    deinit {
+        requests.finish()
     }
 
     struct LoadResult: Sendable {
@@ -173,19 +210,56 @@ actor QwenSynthesizer {
         voice: NeuralVoice,
         delivery: NeuralDelivery = .calm
     ) -> AsyncThrowingStream<[Float], Error> {
-        let (stream, continuation) = AsyncThrowingStream<[Float], Error>.makeStream()
-        Task { await self.generate(text, voice: voice, delivery: delivery, into: continuation) }
-        return stream
+        start(text, voice: voice, delivery: delivery).audio
     }
 
-    private func generate(
-        _ text: String,
-        voice: NeuralVoice,
-        delivery: NeuralDelivery,
-        into continuation: AsyncThrowingStream<[Float], Error>.Continuation
-    ) async {
+    /// A phrase being generated. The stream buffers every chunk, so generation can run ahead of playback.
+    struct Synthesis: Sendable {
+        let audio: AsyncThrowingStream<[Float], Error>
+        /// Drops the phrase. A generation still waiting for its turn never starts; a started one finishes
+        /// unheard (see the type comment).
+        let cancel: @Sendable () -> Void
+        /// Whether generation has begun. From then on dropping the phrase saves nothing, and whatever is
+        /// generated next waits until this one is done.
+        let hasStarted: @Sendable () -> Bool
+    }
+
+    /// Starts generating `text` now, e.g. the next phrase while the current one plays. Generations take turns
+    /// in the order of the calls, so it begins as soon as the one before it is done. Ending iteration early
+    /// cancels it the same way.
+    nonisolated func start(_ text: String, voice: NeuralVoice, delivery: NeuralDelivery = .calm) -> Synthesis {
+        let (stream, continuation) = AsyncThrowingStream<[Float], Error>.makeStream()
+        // A flag, not Task cancellation: cancelling the task would also stop a started generation midway.
+        let dropped = Flag()
+        let started = Flag()
+        continuation.onTermination = { _ in dropped.set() }
+        requests.yield(Request(text: text, voice: voice, delivery: delivery, dropped: dropped, started: started, audio: continuation))
+        return Synthesis(
+            audio: stream,
+            cancel: {
+                dropped.set()
+                continuation.finish()
+            },
+            hasStarted: { started.isSet }
+        )
+    }
+
+    final class Flag: Sendable {
+        private let value = Mutex(false)
+        var isSet: Bool { value.withLock { $0 } }
+        func set() { value.withLock { $0 = true } }
+    }
+
+    private func generate(_ request: Request) async {
+        let continuation = request.audio
         await acquire()
         defer { release() }
+        // Dropped while waiting for its turn (a skipped or cleared phrase): don't generate it at all.
+        if request.dropped.isSet {
+            continuation.finish()
+            return
+        }
+        let (text, voice, delivery) = (request.text, request.voice, request.delivery)
         guard let model else {
             continuation.finish(throwing: QwenSynthesizerError.notLoaded)
             return
@@ -195,6 +269,7 @@ actor QwenSynthesizer {
             // Qwen3 ignores GenerateParameters.seed; seed MLX's global generator so the same text always
             // gives the same audio.
             MLXRandom.seed(voice.seed)
+            request.started.set()
             let events = model.generateStream(
                 text: spokenText(text),
                 conditioning: conditioning,

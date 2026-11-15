@@ -224,6 +224,12 @@ struct NeuralVoiceTests {
         #expect(old.speedUpWhenBehind, "on by default, also for settings saved before it existed")
     }
 
+    @Test func synthesizerCapsTheGPUBufferCache() {
+        _ = QwenSynthesizer()
+        #expect(Memory.cacheLimit == QwenSynthesizer.gpuCacheLimit)
+        #expect(QwenSynthesizer.gpuCacheLimit == 128 * 1_048_576)
+    }
+
     // MARK: Model store
 
     @Test(arguments: [QwenModelSpec.base8bit, .voiceDesign8bit])
@@ -398,6 +404,96 @@ struct NeuralVoiceTests {
         let samples = try await Self.render("Не трогай это!", .defaultMale, with: synthesizer)
         let seconds = Double(samples.count) / 24_000
         #expect(seconds > 0.5 && seconds < 5, "unexpected audio length \(seconds) s")
+        await synthesizer.unload()
+    }
+
+    @Test(.enabled(if: modelInstalled), .timeLimit(.minutes(2)))
+    func nextPhraseIsReadyWhenTheCurrentOneEnds() async throws {
+        let synthesizer = QwenSynthesizer()
+        _ = try await synthesizer.load(modelDirectory: Self.modelDirectory)
+
+        // As in SpeechService: the next phrase starts generating while the current one plays.
+        let current = synthesizer.start("Мы должны уйти до рассвета, иначе они нас найдут.", voice: .defaultMale)
+        let next = synthesizer.start("Где ты был всё это время?", voice: .defaultMale)
+        var played = 0
+        for try await chunk in current.audio { played += chunk.count }
+        try await Task.sleep(for: .seconds(Double(played) / 24_000))  // the current phrase's playback
+
+        let start = ContinuousClock.now
+        var firstChunk: Duration?
+        var samples = 0
+        for try await chunk in next.audio {
+            if firstChunk == nil { firstChunk = ContinuousClock.now - start }
+            samples += chunk.count
+        }
+        #expect(samples > 24_000)
+        #expect(try #require(firstChunk) < .milliseconds(20), "generated ahead, so no wait: \(firstChunk!)")
+        await synthesizer.unload()
+    }
+
+    /// The app's path: queued phrases play one after another with the next one generated ahead, skipping and
+    /// clearing drop it, and nothing falls back to the system voice. Played at volume 0.
+    @MainActor
+    @Test(.enabled(if: modelInstalled), .timeLimit(.minutes(3)))
+    func speechServicePlaysQueuedPhrasesWithPrefetch() async throws {
+        let qwen = QwenVoiceController()
+        qwen.marksStressWhenInstalled = false
+        await qwen.prepare()
+        #expect(qwen.state == .ready)
+        let speech = SpeechService(qwen: qwen)
+        var settings = AppSettings()
+        settings.speechEngine = .qwen
+        settings.speechVolume = 0
+        settings.maxQueuedPhrases = 5
+        speech.apply(settings)
+
+        func waitUntilIdle() async throws {
+            while speech.isSpeaking || speech.queuedCount > 0 { try await Task.sleep(for: .milliseconds(50)) }
+        }
+        let start = ContinuousClock.now
+        for text in ["Да.", "Где ты был?", "Я не знаю.", "Пойдём."] { speech.enqueue(text) }
+        try await waitUntilIdle()
+        #expect(speech.lastNeuralError == nil)
+        print("PREFETCH-TIMING 4 short phrases played in \(ContinuousClock.now - start)")
+
+        // Skip the first phrase and clear the rest mid-way: the service must end idle, ready for more.
+        for text in ["Это первая фраза, её пропустят.", "Вторая.", "Третья фраза.", "Четвёртая."] { speech.enqueue(text) }
+        try await Task.sleep(for: .milliseconds(300))
+        speech.skipCurrent()
+        try await Task.sleep(for: .milliseconds(300))
+        speech.clearQueue()
+        try await waitUntilIdle()
+        speech.enqueue("Конец.")
+        try await waitUntilIdle()
+        #expect(speech.lastNeuralError == nil)
+        await qwen.unload()
+    }
+
+    @Test(.enabled(if: modelInstalled), .timeLimit(.minutes(2)))
+    func droppedPhraseIsNotGenerated() async throws {
+        let synthesizer = QwenSynthesizer()
+        _ = try await synthesizer.load(modelDirectory: Self.modelDirectory)
+
+        let current = synthesizer.start("Капитан приказал поднять паруса.", voice: .defaultMale)
+        let dropped = synthesizer.start("Эта фраза устарела, пока ждала своей очереди.", voice: .defaultMale)
+        dropped.cancel()
+        let following = synthesizer.start("Да.", voice: .defaultMale)
+
+        var droppedSamples = 0
+        for try await chunk in dropped.audio { droppedSamples += chunk.count }
+        #expect(droppedSamples == 0)
+        var currentSamples = 0
+        for try await chunk in current.audio { currentSamples += chunk.count }
+        #expect(currentSamples > 24_000, "a started phrase still finishes")
+        #expect(current.hasStarted() && !dropped.hasStarted())
+
+        let start = ContinuousClock.now
+        var samples = 0
+        for try await chunk in following.audio { samples += chunk.count }
+        #expect(samples > 0)
+        // Had the dropped phrase been generated (~3 s of audio, about as long to make in a Debug build), the
+        // short one would have waited for it.
+        #expect(ContinuousClock.now - start < .milliseconds(1500))
         await synthesizer.unload()
     }
 }

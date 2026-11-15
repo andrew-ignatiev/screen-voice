@@ -166,10 +166,8 @@ struct MainView: View {
                 }
                 .font(.callout)
 
-                if let duration = state.lastOCRDuration, state.isCaptureActive {
-                    Text("OCR: \(Int(duration * 1000)) ms · lines: \(state.recognizedLines.count)")
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.tertiary)
+                if state.isCaptureActive {
+                    OCRStatsLabel(state: state)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -329,6 +327,19 @@ private struct TranslationBanner: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(6)
+        }
+    }
+}
+
+/// OCR timing, updated on every recognized frame. A separate view so only this label re-renders that often.
+private struct OCRStatsLabel: View {
+    let state: AppState
+
+    var body: some View {
+        if let duration = state.lastOCRDuration {
+            Text("OCR: \(Int(duration * 1000)) ms · lines: \(state.recognizedLineCount)")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.tertiary)
         }
     }
 }

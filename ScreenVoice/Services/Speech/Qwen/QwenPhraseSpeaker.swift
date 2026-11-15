@@ -15,6 +15,11 @@ final class QwenPhraseSpeaker {
 
     private var phraseID = 0
     private var pendingBuffers = 0
+    /// Whether the player may still hold audio of a phrase: set with the first chunk, cleared once every
+    /// chunk has been heard. `player.stop()` blocks the main thread for ~0.1 s, so it is skipped when the
+    /// player is already empty, which is the usual case between two phrases. A restarted engine always
+    /// resets the player (see `startEngine`).
+    private var playerHoldsAudio = false
     private var generationFinished = false
     private var completion: Completion?
     private var feedTask: Task<Void, Never>?
@@ -57,7 +62,8 @@ final class QwenPhraseSpeaker {
         playbackRate <= 1 ? max(playbackRate - 0.5, 0) : 0.5 + (playbackRate - 1) / 2
     }
 
-    func speak(_ text: String, voice: NeuralVoice, delivery: NeuralDelivery, synthesizer: QwenSynthesizer, sampleRate: Double, completion: @escaping Completion) {
+    /// Plays `audio`, a phrase's stream from `QwenSynthesizer`, possibly generated (partly) ahead already.
+    func speak(_ audio: AsyncThrowingStream<[Float], Error>, sampleRate: Double, completion: @escaping Completion) {
         stop()
         phraseID += 1
         let id = phraseID
@@ -74,7 +80,7 @@ final class QwenPhraseSpeaker {
 
         feedTask = Task { [weak self] in
             do {
-                for try await samples in synthesizer.synthesize(text, voice: voice, delivery: delivery) {
+                for try await samples in audio {
                     guard let self, id == self.phraseID else { return }
                     self.schedule(samples, id: id)
                 }
@@ -101,7 +107,10 @@ final class QwenPhraseSpeaker {
         phraseID += 1
         feedTask?.cancel()
         feedTask = nil
-        player.stop()
+        if playerHoldsAudio {
+            player.stop()
+            playerHoldsAudio = false
+        }
         pendingBuffers = 0
         if let completion {
             self.completion = nil
@@ -124,6 +133,10 @@ final class QwenPhraseSpeaker {
             format = newFormat
         }
         if !engine.isRunning {
+            // The engine was stopped (first phrase, new format, output device change): start the player
+            // from a clean state, whatever it held.
+            player.stop()
+            playerHoldsAudio = false
             engine.prepare()
             try engine.start()
         }
@@ -138,6 +151,7 @@ final class QwenPhraseSpeaker {
         buffer.frameLength = AVAudioFrameCount(samples.count)
         samples.withUnsafeBufferPointer { channel.update(from: $0.baseAddress!, count: samples.count) }
         pendingBuffers += 1
+        playerHoldsAudio = true
         player.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { [weak self] _ in
             Task { @MainActor in self?.bufferDidPlay(id) }
         }
@@ -157,6 +171,7 @@ final class QwenPhraseSpeaker {
 
     private func finishIfDone(_ id: Int) {
         if generationFinished, pendingBuffers <= 0 {
+            playerHoldsAudio = false
             finish(id, .success(()))
         }
     }

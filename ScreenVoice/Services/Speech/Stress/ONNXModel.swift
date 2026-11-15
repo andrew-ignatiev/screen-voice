@@ -8,6 +8,8 @@ final class ONNXModel: @unchecked Sendable {
 
     private let session: ORTSession
     private let inputNames: Set<String>
+    /// Whether the weights are memory-mapped (see ONNXMappedGraph) rather than copied.
+    let mapsWeights: Bool
 
     init(file: URL, threads: Int = 2) throws {
         guard let environment = Self.environment else { throw RussianStressError.runtime("ONNX Runtime didn’t start") }
@@ -17,7 +19,20 @@ final class ONNXModel: @unchecked Sendable {
         // cross RUAccent's 0.55 threshold on rare words. Basic optimization gives the unoptimized numbers (and the
         // Python reference's marks) at the same speed.
         try options.setGraphOptimizationLevel(.basic)
-        session = try ORTSession(env: environment, modelPath: file.path, sessionOptions: options)
+        // Weights memory-mapped from the file rather than copied (see ONNXMappedGraph); the original as a fallback.
+        var mappedSession: ORTSession?
+        if let mapped = ONNXMappedGraph.graph(for: file) {
+            mappedSession = try? ORTSession(env: environment, modelPath: mapped.path, sessionOptions: options)
+            // A graph ONNX Runtime rejects is written again next time.
+            if mappedSession == nil { try? FileManager.default.removeItem(at: mapped) }
+        }
+        if let mappedSession {
+            session = mappedSession
+            mapsWeights = true
+        } else {
+            session = try ORTSession(env: environment, modelPath: file.path, sessionOptions: options)
+            mapsWeights = false
+        }
         inputNames = Set(try session.inputNames())
     }
 

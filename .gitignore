@@ -13,5 +13,19 @@ Build/
 .swiftpm/
 .build/
 
+# Editors and IDEs
+.idea/
+*.iml
+.vscode/
+*.swp
+*~
+
+# Local Claude Code settings
+.claude/settings.local.json
+
+# Leftovers of interrupted writes and merges
+*.partial
+*.orig
+
 # Internal documents kept out of the public repository
 ScreenVoice_Technical_Specification_MVP.pdf

@@ -3,7 +3,9 @@ import Foundation
 import Observation
 
 /// Bounded FIFO of phrases waiting to be spoken. When full, the oldest phrase is dropped, and phrases
-/// that waited too long are skipped: by then a newer subtitle is already on screen.
+/// that waited too long are skipped: by then a newer subtitle is already on screen. The first phrase can be
+/// kept when its audio is already being generated; then the oldest after it is dropped. A first phrase past
+/// half its allowed age isn't kept: it would likely be skipped as too old before its turn.
 struct SpeechQueue: Sendable {
     struct Item: Equatable, Sendable {
         let text: String
@@ -19,9 +21,9 @@ struct SpeechQueue: Sendable {
         self.maxAge = maxAge
     }
 
-    mutating func enqueue(_ text: String, at now: TimeInterval) {
+    mutating func enqueue(_ text: String, at now: TimeInterval, keepingHead: Bool = false) {
         items.append(Item(text: text, enqueuedAt: now))
-        trim()
+        trim(keepingHead: keepingHead, at: now)
     }
 
     mutating func next(at now: TimeInterval) -> Item? {
@@ -29,19 +31,22 @@ struct SpeechQueue: Sendable {
         return items.isEmpty ? nil : items.removeFirst()
     }
 
-    mutating func setCapacity(_ newCapacity: Int) {
+    mutating func setCapacity(_ newCapacity: Int, at now: TimeInterval = 0, keepingHead: Bool = false) {
         capacity = max(1, newCapacity)
-        trim()
+        trim(keepingHead: keepingHead, at: now)
     }
 
     mutating func removeAll() {
         items.removeAll()
     }
 
-    private mutating func trim() {
-        if items.count > capacity {
-            items.removeFirst(items.count - capacity)
-        }
+    private mutating func trim(keepingHead: Bool, at now: TimeInterval) {
+        let extra = items.count - capacity
+        guard extra > 0, let head = items.first else { return }
+        // With room for one phrase only, the newest always wins.
+        let keepsHead = keepingHead && capacity > 1 && now - head.enqueuedAt <= maxAge / 2
+        let first = keepsHead ? 1 : 0
+        items.removeSubrange(first..<first + extra)
     }
 }
 
@@ -111,14 +116,14 @@ final class SpeechService {
         system.voiceIdentifier = settings.voiceIdentifier
         system.volume = volume
         neural.volume = volume
-        queue.setCapacity(settings.maxQueuedPhrases)
+        queue.setCapacity(settings.maxQueuedPhrases, at: Self.now, keepingHead: headIsBeingGenerated)
         queuedCount = queue.items.count
         updateSpeed()
         prefetchNext()
     }
 
     func enqueue(_ text: String) {
-        queue.enqueue(text, at: Self.now)
+        queue.enqueue(text, at: Self.now, keepingHead: headIsBeingGenerated)
         queuedCount = queue.items.count
         updateSpeed()
         speakNextIfPossible()
@@ -234,9 +239,19 @@ final class SpeechService {
 
     // MARK: Generating ahead
 
+    /// A started generation always runs to its end, so dropping the phrase it is for would make the next one
+    /// wait behind audio nobody hears. The queue keeps that phrase and drops the one after it instead.
+    private var headIsBeingGenerated: Bool {
+        guard let prefetched else { return false }
+        return prefetched.item == queue.items.first && prefetched.synthesis.hasStarted()
+    }
+
     /// While a neural phrase plays, starts generating the phrase queued after it. Only one phrase is generated
     /// ahead; if the queue's head changes (dropped as too old, trimmed, cleared) or the voice changes, the
     /// prefetch is replaced. Generation is ~3× faster than playback, so it is usually done before it's needed.
+    ///
+    /// With a queue of one phrase the newest subtitle always replaces the waiting one; if that one's generation
+    /// had started, the newest waits for it to end (rare: subtitles must come faster than they are spoken).
     private func prefetchNext() {
         guard preferredEngine == .qwen, current?.engine == .qwen,
               let synthesizer = qwen.readySynthesizer, let next = queue.items.first else {

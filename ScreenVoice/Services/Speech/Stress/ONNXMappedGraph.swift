@@ -80,10 +80,9 @@ enum ONNXMappedGraph {
             case 1: i += 8
             case 5: i += 4
             case 2:
-                let length = Int(try varint(bytes, &i, end: range.upperBound))
+                let length = try payloadLength(bytes, &i, end: range.upperBound)
                 let payload = i ..< i + length
                 i += length
-                guard i <= range.upperBound else { throw Failure.malformed }
                 if let replaced = try transform(field, payload) {
                     appendField(&out, field: field, payload: replaced)
                     continue
@@ -111,11 +110,12 @@ enum ONNXMappedGraph {
             case 1: i += 8
             case 5: i += 4
             case 2:
-                let length = Int(try varint(bytes, &i, end: range.upperBound))
+                let length = try payloadLength(bytes, &i, end: range.upperBound)
                 if field == tensorRawData { rawData = i ..< i + length }
                 i += length
             default: throw Failure.malformed
             }
+            guard i <= range.upperBound else { throw Failure.malformed }
         }
         guard let rawData, rawData.count >= minimumExternalBytes else { return nil }
 
@@ -142,6 +142,13 @@ enum ONNXMappedGraph {
             shift += 7
         }
         throw Failure.malformed
+    }
+
+    /// The length of a length-delimited field, checked to fit before `end` (a damaged file must not trap).
+    private static func payloadLength(_ bytes: UnsafeBufferPointer<UInt8>, _ i: inout Int, end: Int) throws -> Int {
+        let length = try varint(bytes, &i, end: end)
+        guard length <= UInt64(end - i) else { throw Failure.malformed }
+        return Int(length)
     }
 
     private static func appendVarint(_ out: inout Data, _ value: UInt64) {

@@ -24,6 +24,30 @@ struct PipelineTests {
         #expect(queue.items.map(\.text) == ["two", "three"])
     }
 
+    @Test func speechQueueKeepsTheHeadBeingGenerated() {
+        var queue = SpeechQueue(capacity: 2, maxAge: 10)
+        queue.enqueue("one", at: 0)
+        queue.enqueue("two", at: 0)
+        queue.enqueue("three", at: 0, keepingHead: true)
+        #expect(queue.items.map(\.text) == ["one", "three"])
+
+        var single = SpeechQueue(capacity: 1, maxAge: 10)
+        single.enqueue("one", at: 0)
+        single.enqueue("two", at: 0, keepingHead: true)
+        #expect(single.items.map(\.text) == ["two"], "with room for one phrase the newest wins")
+
+        var aging = SpeechQueue(capacity: 2, maxAge: 10)
+        aging.enqueue("one", at: 0)
+        aging.enqueue("two", at: 3)
+        aging.enqueue("three", at: 6, keepingHead: true)
+        #expect(aging.items.map(\.text) == ["two", "three"], "a head past half its age would go stale anyway")
+
+        var shrinking = SpeechQueue(capacity: 3, maxAge: 10)
+        for text in ["one", "two", "three"] { shrinking.enqueue(text, at: 0) }
+        shrinking.setCapacity(2, at: 1, keepingHead: true)
+        #expect(shrinking.items.map(\.text) == ["one", "three"])
+    }
+
     @Test func speechQueueSkipsStalePhrases() {
         var queue = SpeechQueue(capacity: 5, maxAge: 5)
         queue.enqueue("old", at: 0)

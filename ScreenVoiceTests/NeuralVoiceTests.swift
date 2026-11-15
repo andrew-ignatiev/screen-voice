@@ -485,6 +485,7 @@ struct NeuralVoiceTests {
         var currentSamples = 0
         for try await chunk in current.audio { currentSamples += chunk.count }
         #expect(currentSamples > 24_000, "a started phrase still finishes")
+        #expect(current.hasStarted() && !dropped.hasStarted())
 
         let start = ContinuousClock.now
         var samples = 0

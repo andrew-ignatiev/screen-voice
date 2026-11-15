@@ -349,7 +349,7 @@ The optional **Russian stress** pack (~550 MB) makes the neural voice stress wor
 ### Behaviour details
 
 - **Streaming:** audio is scheduled on `AVAudioPlayerNode` as 0.5 s chunks arrive, so playback starts before the line finishes generating.
-- **Next phrase generated ahead:** while a phrase plays, the next queued one is already being generated (only one ahead). When the current phrase ends, the next starts at once instead of after ~0.2 s. If that phrase is dropped first (too old, queue trimmed or cleared, voice changed), a generation that hasn't begun is skipped; one already running finishes unheard.
+- **Next phrase generated ahead:** while a phrase plays, the next queued one is already being generated (only one ahead). When the current phrase ends, the next starts at once instead of after ~0.25 s; the audio player is not reset between phrases, which alone took ~0.1 s. When the queue is full, a phrase whose generation has started is kept and the one after it is dropped instead, so the next phrase never waits behind audio nobody hears. If the phrase is dropped anyway (too old, queue cleared, voice changed), a generation that hasn't begun is skipped; one already running finishes unheard. A phrase that has already waited more than half the age limit isn't kept this way.
 - **Skip / Stop:** playback stops at once. A generation already running finishes in the background and its audio is discarded. It runs ~3.5× faster than real time, so it has usually finished anyway. This keeps the model's shared decoder state from being corrupted.
 - **Speed:** Qwen3 has no speaking-rate control, so `AVAudioUnitTimePitch` stretches playback (bypassed at 1×).
 - **Output device change:** the current phrase ends and the audio engine restarts on the next phrase.

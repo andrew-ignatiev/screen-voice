@@ -17,6 +17,7 @@ Typical use: a film, stream, or game with English subtitles, and you want to *he
 - [Settings](#settings)
 - [How it works](#how-it-works)
 - [Neural voice (Qwen3-TTS)](#neural-voice-qwen3-tts)
+- [Performance and memory](#performance-and-memory)
 - [Project structure](#project-structure)
 - [Localization](#localization)
 - [Tests](#tests)
@@ -284,12 +285,14 @@ Apple M5 Pro, 24 GB, Release build, 0.5 s streaming chunks, standalone benchmark
 |---|---|---|---|
 | First audio | 0.19 s | 0.15 s | 0.66 s |
 | Speed vs real time | ~3× faster | ~3.5× faster | slower than real time |
-| Peak memory while speaking | 4.4 GB | 3.9 GB | 6.1 GB |
+| Peak MLX memory (while loading)† | 4.4 GB | 3.9 GB | 6.1 GB |
 | Word errors* (19 lines without numbers) | 3 minor | 1 | 1 |
 | Numbers (1500 рублей, 2024, 1984…) | all correct | "1500 рублей" misread | all correct |
 | Pitch of the male narrator | 93 Hz, deepest | 109 Hz | 94 Hz |
 
 \* The output was transcribed with Apple's on-device ru-RU `DictationTranscriber` and compared with the input text. A 6 s reference gave 0 word errors but a less steady, higher voice (112 Hz); the 11 s one sounded better in listening tests.
+
+† MLX's own peak, reached while the model loads. The whole process takes ~3.6 GB while speaking; see [Performance and memory](#performance-and-memory).
 
 One-time startup: model load ≈ 1 s plus a short warm-up phrase, so the first subtitle is as fast as the rest (without it the first phrase took 2.5 s to start).
 
@@ -349,10 +352,46 @@ The optional **Russian stress** pack (~550 MB) makes the neural voice stress wor
 ### Behaviour details
 
 - **Streaming:** audio is scheduled on `AVAudioPlayerNode` as 0.5 s chunks arrive, so playback starts before the line finishes generating.
-- **Next phrase generated ahead:** while a phrase plays, the next queued one is already being generated (only one ahead). When the current phrase ends, the next starts at once instead of after ~0.25 s; the audio player is not reset between phrases, which alone took ~0.1 s. When the queue is full, a phrase whose generation has started is kept and the one after it is dropped instead, so the next phrase never waits behind audio nobody hears. If the phrase is dropped anyway (too old, queue cleared, voice changed), a generation that hasn't begun is skipped; one already running finishes unheard. A phrase that has already waited more than half the age limit isn't kept this way.
+- **Next phrase generated ahead:** while a phrase plays, the next queued one is already being generated (only one ahead). When the current phrase ends, the next starts at once instead of after ~0.3 s (0.28 s median with the stress pack, see [Performance and memory](#performance-and-memory)); the audio player is not reset between phrases, which alone took ~0.1 s. When the queue is full, a phrase whose generation has started is kept and the one after it is dropped instead, so the next phrase never waits behind audio nobody hears. If the phrase is dropped anyway (too old, queue cleared, voice changed), a generation that hasn't begun is skipped; one already running finishes unheard. A phrase that has already waited more than half the age limit isn't kept this way.
 - **Skip / Stop:** playback stops at once. A generation already running finishes in the background and its audio is discarded. It runs ~3.5× faster than real time, so it has usually finished anyway. This keeps the model's shared decoder state from being corrupted.
 - **Speed:** Qwen3 has no speaking-rate control, so `AVAudioUnitTimePitch` stretches playback (bypassed at 1×).
 - **Output device change:** the current phrase ends and the audio engine restarts on the next phrase.
+
+## Performance and memory
+
+The neural voice used to take ~6.4 GB of RAM while speaking, the Russian stress pack ~0.9 GB more, and each phrase started a noticeable moment after the previous one ended. Four changes ([#1](https://github.com/andrew-ignatiev/screen-voice/pull/1)) fixed this without touching speed or sound.
+
+### Before and after
+
+Apple M5 Pro, 24 GB, Release build, Qwen3-TTS Base with the stress LoRA, the same 25 Russian lines, no OCR or translation running. Measured again on `main` after the merge.
+
+| | Before | After | How it was measured |
+|---|---|---|---|
+| Process memory while speaking | 6.45 GB | **3.6 GB** | Physical footprint after 25 lines (what Activity Monitor shows as Memory) |
+| MLX GPU buffer cache | 2.99 GB | **0.14 GB** | `Memory.cacheMemory` after 25 lines |
+| RUAccent (stress pack) | 892 MB | **272 MB** | Footprint after loading the four ONNX models and dictionaries |
+| Pause before the next phrase | 0.28 s median, 0.48 s max | **under 1 ms** | From the end of one phrase's playback to the next phrase's first audio, 24 pairs, synthesizer only; the player reset (~0.1 s) came on top |
+| First audio of a phrase | 0.21 s | 0.21–0.22 s | Median over 25 lines; the difference is within run-to-run variation |
+| Generation speed | 0.35 of real time | 0.35–0.36 | Median over 25 lines |
+| Audio | | **bit-identical** | Same MD5 of the WAV files with and without the cache limit |
+| Stress marks | | **identical** | 485 of 485 reference lines, as before |
+
+### What changed and why
+
+- **MLX buffer cache capped at 128 MB** (`QwenSynthesizer.gpuCacheLimit`). MLX keeps freed GPU buffers for reuse, by default up to its memory limit, so ~3 GB of buffers nobody used stayed allocated on top of the 3.1 GB of weights. Generation allocates buffers of the same few sizes again and again, so 128 MB serves it just as well. The numbers aren't changed: the cache only decides which freed buffers are kept.
+- **RUAccent's ONNX weights are memory-mapped** (`ONNXMappedGraph`). The models keep their weights inside `model.onnx`, and ONNX Runtime copied them into its heap: the 116 MB stress-usage model took 370 MB. Weights stored as *external data* are memory-mapped instead: clean pages backed by the file, which the system can drop and read back. On first load the app writes a small `model.mapped.onnx` (70–280 KB) next to each pinned `model.onnx`. It is the same graph, but each tensor points into the original file by offset, so nothing is duplicated on disk. The pinned files stay untouched, so the pack is still verified by their sizes and SHA-256. If the graph can't be written or ONNX Runtime rejects it, the original file is used and the graph is written again on the next load. A damaged model file makes the rewriter throw an error instead of crashing.
+- **The next phrase is generated while the current one plays.** Before, a phrase started generating only when the previous one had finished playing, so every phrase began with its own ~0.2 s to first audio, plus the marking and the player reset.
+  - `SpeechService` keeps one phrase generated ahead: the head of the queue. If the head changes (too old, queue trimmed or cleared) or the voice changes, the prefetch is replaced.
+  - `QwenSynthesizer` generates requests from a single queue in the order they were made, so the phrase generated ahead never overtakes the one playing.
+  - A dropped phrase that hasn't started generating is never generated. A started one is never cancelled midway, because stopping mlx-audio-swift mid-phrase can corrupt the shared decoder state. It finishes unheard, and the queue avoids that case: when the queue is full, a phrase whose generation has started is kept and the one after it is dropped instead. With a one-phrase queue, or for a phrase past half its age limit, the newest subtitle still wins.
+  - The audio player is no longer reset between phrases when it is already empty. `player.stop()` blocked the main thread for ~0.1 s each time.
+- **Fewer redraws during capture.** Each OCR frame (4 per second by default) used to re-render the whole main window and the floating panel, because the status text read the list of recognized lines. The status now reads a flag that changes only when text appears or disappears, and the "OCR: … ms" label is a separate view, so only that label updates with every frame.
+
+### Checked and not changed
+
+- **Leaks.** A few seconds after the model is unloaded, the process falls back to ~128 MB. `leaks` reports 1.5 MB of MLX graph cycles after 8 phrases and 14 KB after 32: one-off cycles from loading, not a leak per phrase. The app's own objects don't leak: audio taps are removed, tasks hold `self` weakly, and the speech queue, history and spoken-text memory are bounded.
+- **ONNX Runtime options.** Disabling weight prepacking doubles the marking time. A separate allocator for weights changed nothing. Full graph optimization changes rare stress marks, so it stays at basic.
+- **Stopping the audio engine between phrases.** Restarting it adds ~90 ms of latency, and its idle CPU use couldn't be measured from the build environment, so once started the engine keeps running.
 
 ## Project structure
 
@@ -427,7 +466,7 @@ xcodebuild -project ScreenVoice.xcodeproj -scheme ScreenVoice -destination 'plat
 | Suite | Covers |
 |---|---|
 | `TextChangeDetectorTests` | Stabilization, de-duplication, OCR jitter, multi-line merge, rolling captions, normalization |
-| `PipelineTests` | Bounded speech queue, stale-phrase skipping, settings → pipeline, settings compatibility, region geometry |
+| `PipelineTests` | Bounded speech queue (keeping a phrase whose audio is being generated), stale-phrase skipping, settings → pipeline, settings compatibility, region geometry |
 | `SpeakerLabelFilterTests` | Speaker-label stripping rules |
 | `LocalizationTests` | English development language, Russian translations present, format strings with arguments, system language names, spoken text stays Russian |
 | `NeuralVoiceTests` | Voice description, gender switching, presets (save, replace, delete, built-ins), settings compatibility, reference texts and bundled narrators, reference file naming, recorded voices (file, transcript, trimming, cleanup), delivery temperature, speed mapping, model install checks, removal of old model files, plus **end-to-end**: Russian synthesis speed, identical audio for the same voice, creating a voice with VoiceDesign and speaking it with Base, speaking a 48 kHz recorded voice, serialized generation, the next phrase generated ahead (ready at once; a dropped one isn't generated), queued phrases through `SpeechService` with skip and clear, the stress LoRA (196 wrapped layers, numeric check), speaking with stress marks, fallback when the pack is broken (these run only when the models are installed in the app container) |

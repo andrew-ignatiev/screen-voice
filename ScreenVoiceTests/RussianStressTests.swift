@@ -6,7 +6,7 @@ import Testing
 @testable import ScreenVoice
 
 /// The Swift port of RUAccent must mark text exactly like the Python reference
-/// (`screenvoice-research/tools/ruaccent_fixed.py`, RUAccent 1.5.8.3 with the port's fixes). The expected
+/// (`screenvoice-research/tools/ruaccent_fixed.py`, RUAccent 1.5.8.3 with the port's fixes and rules). The expected
 /// outputs are in `RussianStressGolden.json`: 85 hand-written subtitle lines and 400 random ones.
 @Suite("Russian stress")
 struct RussianStressTests {
@@ -41,6 +41,24 @@ struct RussianStressTests {
         #expect(StressText.fixCapital(source: Self.s("Дом"), target: Self.s("дома")).string == "дома")
         #expect(StressText.plusToAcute(Self.s("з+амок +он")).string == "за\u{301}мок о\u{301}н")
         #expect(StressText.transferPlus(from: Self.s("з+амок"), to: Self.s("Замок")).string == "З+амок")
+    }
+
+    @Test func correctionsKeepTheWordsLettersAndCase() {
+        #expect(StressCorrections.apply("н+ебо", to: Self.s("НЕБО")).string == "Н+ЕБО")
+        #expect(StressCorrections.apply("св+ёкла", to: Self.s("Свекла")).string == "Св+ёкла")
+        #expect(StressCorrections.apply("началс+я", to: Self.s("начался")).string == "началс+я")
+        // Every entry is its key with one mark before a vowel; only е may become ё.
+        for (word, correction) in StressCorrections.words {
+            let marked = Self.s(correction)
+            let mark = marked.firstIndex(of: StressText.plus)
+            #expect(marked.filter { $0 == StressText.plus }.count == 1, "\(word)")
+            #expect(correction.replacingOccurrences(of: "+", with: "").replacingOccurrences(of: "ё", with: "е") == word, "\(word)")
+            if let mark, mark + 1 < marked.count {
+                #expect(StressText.countVowels([marked[mark + 1]]) == 1, "\(word)")
+            } else {
+                Issue.record("no vowel after the mark in \(correction)")
+            }
+        }
     }
 
     // MARK: Spec
@@ -119,9 +137,15 @@ struct RussianStressTests {
         }
         print("STRESS-TIMING \(golden.lines.count) lines in \(ContinuousClock.now - start)")
         #expect(differences == 0)
-        // The meaning-dependent cases from the listening test.
+        // The meaning-dependent cases from the listening test; «старый» is marked though the usage model skips it.
         #expect(try marker.mark("Он открыл замок ключом и вошел в старый замок.")
-            == "Он откры\u{301}л замо\u{301}к ключо\u{301}м и вошё\u{301}л в старый за\u{301}мок.")
+            == "Он откры\u{301}л замо\u{301}к ключо\u{301}м и вошё\u{301}л в ста\u{301}рый за\u{301}мок.")
+        // Corrections override the models, in the word's own case, and leave a typed ё alone.
+        #expect(try marker.mark("Небо было серым, а во рту пересохло нёбо.")
+            == "Не\u{301}бо бы\u{301}ло се\u{301}рым, а во рту\u{301} пересо\u{301}хло нё\u{301}бо.")
+        #expect(try marker.mark("ФЕДОР купил свеклу.").hasPrefix("ФЁ\u{301}ДОР купи\u{301}л свё\u{301}клу"))
+        #expect(try marker.mark("Положи творог и щавель в холодильник.")
+            == "Положи\u{301} тво\u{301}рог и щаве\u{301}ль в холоди\u{301}льник.")
     }
 }
 

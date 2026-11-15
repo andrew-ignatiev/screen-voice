@@ -12,6 +12,11 @@ import Foundation
 ///
 /// On top, as the LoRA's authors recommend: capitalized words are lowercased before marking (RUAccent stresses
 /// them worse) and the `+` before a vowel becomes U+0301 after it.
+///
+/// Two more rules of ours, also in the reference:
+/// - Every word of two or more vowels is marked, not only those the stress-usage model labels as stressed:
+///   that model also skips ordinary words («старый», «слишком»), and the LoRA reads unmarked words worse.
+/// - `StressCorrections` override the result for words RUAccent always gets wrong.
 final class RussianStressMarker: @unchecked Sendable {
     private let stressUsage: TokenClassifier
     private let yoResolver: TokenClassifier
@@ -122,6 +127,11 @@ final class RussianStressMarker: @unchecked Sendable {
             var processed = try processYo(words, sentence: sentence, wordStarts: starts)
             processed = try processHomographs(processed)
             processed = try processAccent(processed, usages: usages)
+            for (i, word) in words.enumerated() {
+                if let correction = StressCorrections.words[StressText.lower(word).string] {
+                    processed[i] = StressCorrections.apply(correction, to: word)
+                }
+            }
             var rebuilt: [Unicode.Scalar] = []
             for (gap, word) in zip(gaps, processed) { rebuilt += gap + word }
             rebuilt += gaps[gaps.count - 1]
@@ -143,6 +153,8 @@ final class RussianStressMarker: @unchecked Sendable {
         }
     }
 
+    /// The model's choice is kept even when it is unsure: leaving such homographs unmarked (tried with a 0.6
+    /// confidence threshold) removed 4 wrong marks and 10 right ones on the test lines and sounded no better.
     private func processHomographs(_ words: [[Unicode.Scalar]]) throws -> [[Unicode.Scalar]] {
         var result = words
         for (position, word) in words.enumerated() {
@@ -167,8 +179,9 @@ final class RussianStressMarker: @unchecked Sendable {
     private func processAccent(_ words: [[Unicode.Scalar]], usages: [String]) throws -> [[Unicode.Scalar]] {
         var result = words
         for (i, word) in words.enumerated() {
-            guard !word.contains(StressText.plus), usages[i] == "STRESS" else { continue }
+            guard !word.contains(StressText.plus) else { continue }
             let lower = StressText.lower(word)
+            guard usages[i] == "STRESS" || StressText.countVowels(lower) > 1 else { continue }
             let stressed = lower == ["о"] ? Array("+о".unicodeScalars) : (accents.stressed(lower) ?? lower)
             if stressed == lower, !StressText.hasPunctuation(lower), StressText.countVowels(lower) > 1 {
                 result[i] = try putAccent(word)

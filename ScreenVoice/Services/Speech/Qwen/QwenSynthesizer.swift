@@ -155,9 +155,11 @@ actor QwenSynthesizer {
     /// Whether phrases currently get stress marks.
     var marksStress: Bool { stressMarker != nil }
 
-    /// The text the model reads: with RUAccent's stress marks when the pack is loaded. Marking takes a few
-    /// milliseconds per phrase; if it fails, the phrase is read as written.
+    /// The text the model reads: numbers, units and abbreviations in words, and with RUAccent's stress marks
+    /// when the pack is loaded. Marking takes a few milliseconds per phrase; if it fails, the phrase is read
+    /// without marks.
     private func spokenText(_ text: String) -> String {
+        let text = SpokenTextNormalizer.normalize(text)
         guard let stressMarker else { return text }
         do {
             return try stressMarker.mark(text)

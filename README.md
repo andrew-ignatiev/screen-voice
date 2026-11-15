@@ -33,6 +33,7 @@ Typical use: a film, stream, or game with English subtitles, and you want to *he
   - **System voice:** any installed ru-RU voice (Milena, Yuri, …) via `AVSpeechSynthesizer`.
   - **Qwen3-TTS:** an on-device neural voice via [MLX](https://github.com/ml-explore/mlx-swift), built from a description you write (gender, timbre, manner). VoiceDesign records the voice once; the Base model then clones that recording for every phrase. It streams audio, starts speaking about 0.2 s after a line is ready (M5 Pro, Release build), and falls back to the system voice automatically.
 - **Russian stress (optional):** words are stressed by their meaning (*за́мок* / *замо́к*): RUAccent marks the stressed vowels and a stress LoRA makes the voice follow them. See [Russian stress](#russian-stress).
+- **Numbers read out:** for the neural voice, numbers, dates, times, money, units and common abbreviations are turned into words first (*в 18:05* → *в восемнадцать ноль пять*, *2,5 кг* → *два с половиной килограмма*). See [Numbers, dates and units](#numbers-dates-and-units).
 - **Voice presets:** save a voice you like (gender, style, variant, reference length) and switch back to it later. Two narrator presets, male and female, are built in and work without the voice designer.
 - **Your own voice:** record yourself reading a suggested passage (8–15 s), or import a WAV or MP3 sample, and the translation is spoken in that voice. No voice designer needed.
 - **Smart de-duplication:** each line is spoken once. OCR jitter, flicker, multi-line subtitles and rolling captions don't cause repeats.
@@ -347,7 +348,32 @@ The optional **Russian stress** pack (~550 MB) makes the neural voice stress wor
 - The ONNX weights are memory-mapped rather than copied: next to each `model.onnx` the app writes a small `model.mapped.onnx` whose tensors point into the original file by offset, so nothing is duplicated on disk. ONNX Runtime otherwise copies them into its heap, ~0.9 GB for the pack instead of ~0.2 GB.
 - The first load after installing builds a compact table from the dictionary (`dictionary/accents.table`, 88 MB, a few seconds). After that it is memory-mapped.
 - In a listening test on 16 hard lines, LoRA + RUAccent marks sounded better than the plain model. Hand-checked marks were better still, because RUAccent got about 8 of the lines' homographs and ё words wrong (*узнаем/узнаём*, *нёбо*, *щавель*). RUAccent's larger big_poetry homograph model made as many mistakes.
+- Two rules of ScreenVoice sit on top of RUAccent, also in the Python reference:
+  - **Every word of two or more vowels is marked.** RUAccent marks only the words its stress-usage model labels as stressed, and that model also skips ordinary words (*старый*, *слишком*, *этом*).
+  - **Corrections** (`StressCorrections.swift`): a short table of words RUAccent gets wrong in any context, applied to the word as typed: *не́бо* (it read the sky as *нёбо*), *щаве́ль*, *начался́*, *поняла́*, *свёкла*, *Фёдор*, *Алёна*. Words that need the context (*мука*, *дома*, *все/всё*, *узнаем/узнаём*) can't be fixed this way.
+- Measured on 215 subtitle-style lines (641 hand-marked words, ё typed as е): the two rules take correct marks from 95.0% to 96.7%, wrong marks from 26 to 20 and unmarked words from 6 to 1. The set is small and was marked by hand once, so differences of a few words are within its noise.
+- **Tried and dropped:** leaving a homograph unmarked when the model is unsure (the chosen variant under 60% of the variants' probability), so that the voice reads it from the context. It removed 4 more wrong marks but also 10 right ones, mostly on the first word of a phrase (*Замок*, *Окна*), and by ear the unmarked words sounded no better.
+- stressonnx's `ruaccent-silero` (RUAccent with Silero marks on the words it leaves unmarked) was measured on the same lines: 96.1%, 25 wrong marks. It uses the same RUAccent files, so its homograph and ё mistakes are the same, and its gain comes from filling unmarked words, which the first rule does without another model.
 - **Mark stress** turns it off without deleting the pack; the model reloads. If the pack fails to load, phrases are spoken without marks and the settings show why.
+
+### Numbers, dates and units
+
+Before a phrase goes to the neural voice, `SpokenTextNormalizer` rewrites what the model misreads into plain words. It runs with or without the stress pack and takes ~0.05 ms per phrase. The system voice reads such text itself and gets it unchanged.
+
+| Written | Spoken |
+|---|---|
+| на 15 марта 2024 года в 9:30 | на пятнадцатое марта две тысячи двадцать четвёртого года в девять тридцать |
+| в 1984 году, в 90-х, XX века | в тысяча девятьсот восемьдесят четвёртом году, в девяностых, двадцатого века |
+| на 5-м этаже, после 3-го тайма | на пятом этаже, после третьего тайма |
+| 1500 руб., $200, 3 млн, 25% | тысяча пятьсот рублей, двести долларов, три миллиона, двадцать пять процентов |
+| 2,5 кг, 1,5 л, 120 км/ч, -15°C | два с половиной килограмма, полтора литра, сто двадцать километров в час, минус пятнадцать градусов Цельсия |
+| из 1000 человек, с 5 до 7, через 1 мин. | из тысячи человек, с пяти до семи, через одну минуту |
+| т.е., и т.д., № 7, Глава 21 | то есть, и так далее, номер семь, Глава двадцать первая |
+
+- **Why.** The model reads bare digits passably but not what surrounds them, and RUAccent deletes the characters it doesn't know (%, $, °, /) before the model sees them. On 30 test lines spoken with the app's voice and transcribed by Apple dictation, 15 were misread before (*5-м* → "пять", *18:05*, *2,5 кг*, *км/ч*, *руб.*, *т.е.* dropped) and 2 after. By ear the new recordings are clearly better too.
+- **Case and gender are guessed from the neighbouring words:** the preposition before the number (*до пяти*, *к шести часам*), the ending of the noun after it (*с тремя друзьями*, *в пяти метрах*) and a short list of feminine and neuter nouns (*одна минута*, *две недели*). With nothing to go by, the number is in the nominative.
+- **Left alone:** Latin words and initialisms (iPhone, New York, США, МЧС), which the model already reads correctly, and digits inside names (4K, R2-D2).
+- **Known gaps:** an ordinal written as a bare number (*с 3 пути* is read "с три пути"), a number after *и* that continues another case (*из 1000 человек и 22 офицеров*), fractions outside the nominative, and phone numbers, which are read as plain numbers.
 
 ### Behaviour details
 
@@ -417,8 +443,12 @@ ScreenVoice/
 │       │   ├── QwenSynthesizer.swift     MLX model actor: Base cloning, VoiceDesign references
 │       │   ├── QwenVoiceController.swift Ordered load/unload, state for the UI
 │       │   └── QwenPhraseSpeaker.swift   AVAudioEngine streaming playback
+│       ├── Normalization/
+│       │   ├── SpokenTextNormalizer.swift Numbers, dates, money, units and abbreviations into words
+│       │   └── RussianNumerals.swift     Cardinals and ordinals in every case, counted nouns
 │       └── Stress/
 │           ├── RussianStressMarker.swift RUAccent port: stress usage, ё, homographs, dictionary, character model
+│           ├── StressCorrections.swift   Words RUAccent always marks wrong, with the right mark
 │           ├── StressText.swift          RUAccent's text rules (splitting, spacing, case)
 │           ├── WordPieceTokenizer.swift  BERT tokenizer with offsets
 │           ├── ByteLevelBPETokenizer.swift RoBERTa tokenizer with RUAccent's 10 000 added word forms
@@ -470,7 +500,8 @@ xcodebuild -project ScreenVoice.xcodeproj -scheme ScreenVoice -destination 'plat
 | `SpeakerLabelFilterTests` | Speaker-label stripping rules |
 | `LocalizationTests` | English development language, Russian translations present, format strings with arguments, system language names, spoken text stays Russian |
 | `NeuralVoiceTests` | Voice description, gender switching, presets (save, replace, delete, built-ins), settings compatibility, reference texts and bundled narrators, reference file naming, recorded voices (file, transcript, trimming, cleanup), delivery temperature, speed mapping, model install checks, removal of old model files, plus **end-to-end**: Russian synthesis speed, identical audio for the same voice, creating a voice with VoiceDesign and speaking it with Base, speaking a 48 kHz recorded voice, serialized generation, the next phrase generated ahead (ready at once; a dropped one isn't generated), queued phrases through `SpeechService` with skip and clear, the stress LoRA (196 wrapped layers, numeric check), speaking with stress marks, fallback when the pack is broken (these run only when the models are installed in the app container) |
-| `RussianStressTests` | RUAccent text rules against Python, pinned stress pack, settings default, and with the pack installed: token ids identical to Hugging Face, marks identical to the Python reference on 485 lines (`RussianStressGolden.json`) |
+| `RussianStressTests` | RUAccent text rules against Python, pinned stress pack, settings default, and with the pack installed: token ids identical to Hugging Face, marks identical to the Python reference on 485 lines (`RussianStressGolden.json`), corrections |
+| `SpokenTextNormalizerTests` | Cardinals and ordinals in every case, numbers with their nouns, dates and times, ordinal endings, money, units, symbols, abbreviations, ordinary text left unchanged |
 | `ONNXMappedGraphTests` | A hand-built ONNX model runs from its memory-mapped graph with the same outputs; a damaged graph falls back to the original and is rewritten |
 
 ## Privacy
@@ -487,8 +518,8 @@ xcodebuild -project ScreenVoice.xcodeproj -scheme ScreenVoice -destination 'plat
 - The app doesn't lower the video's volume; speech plays on top.
 - Latency depends on region size, analysis rate and Mac model. Qwen latency under full OCR and translation load hasn't been measured yet.
 - VoiceDesign occasionally skips or adds a word in a reference; the clone then sounds less natural. Try another variant.
-- Pronunciation of numbers, dates and abbreviations hasn't been tested systematically.
-- RUAccent still picks the wrong homograph or ё now and then (about 8 words on 16 hard test lines), and the stress LoRA follows wrong marks too.
+- Numbers are put into words by rules that guess the case from neighbouring words; see the known gaps in [Numbers, dates and units](#numbers-dates-and-units). It was checked on 30 lines, by transcript and by ear.
+- RUAccent still picks the wrong homograph or ё now and then (about 3 words in 100 on the test lines), and the stress LoRA follows wrong marks too.
 - Only English and Russian interface translations so far.
 
 ## Credits and licenses
